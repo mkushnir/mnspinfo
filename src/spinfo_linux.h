@@ -1,10 +1,17 @@
 #ifndef SPINFO_LINUX_H_DEFINED
 #define SPINFO_LINUX_H_DEFINED
 
+#include <stdint.h>
+#include <time.h>
+#include <unistd.h>
+
+#include <sys/time.h>
+#include <sys/resource.h>
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 typedef struct _spinfo_ctx {
     /*

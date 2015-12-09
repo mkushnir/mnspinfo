@@ -11,6 +11,9 @@
 #include "spinfo_linux.h"
 #endif
 
+#define TIMESPEC_TO_NSEC(ts) ((ts).tv_sec * 1000000000 + (ts).tv_nsec)
+#define TIMEVAL_TO_USEC(ts) ((ts).tv_sec * 1000000 + (ts).tv_usec)
+
 #ifdef __cplusplus
 extern "C" {
 #endif

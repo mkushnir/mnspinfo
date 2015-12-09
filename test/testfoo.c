@@ -98,7 +98,7 @@ test1(void)
     pid_t ppid, pid;
 
     ppid = getpid();
-    if ((pid = rfork(RFPROC|RFFDG)) == 0) {
+    if ((pid = fork()) == 0) {
         run(ppid);
     } else if (pid == -1) {
         FAIL("fork");

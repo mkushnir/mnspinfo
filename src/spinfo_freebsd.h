@@ -5,7 +5,6 @@
 
 #include <sys/param.h>
 #include <sys/queue.h>
-#include <sys/resource.h>
 #include <sys/resource.h> /* CPUSTATES */
 #include <sys/socket.h>
 #include <sys/sysctl.h>
@@ -42,9 +41,6 @@ extern "C" {
 #ifdef SPINFO_CTX_T_DEFINED
 #error "SPINFO_CTX_T_DEFINED cannot be defined here"
 #endif
-
-#define TIMESPEC_TO_NSEC(ts) ((ts).tv_sec * 1000000000 + (ts).tv_nsec)
-#define TIMEVAL_TO_USEC(ts) ((ts).tv_sec * 1000000 + (ts).tv_usec)
 
 typedef struct _spinfo_ctx {
     /*

@@ -27,12 +27,12 @@ endif
 
 nodist_testfoo_SOURCES = ../src/diag.c
 testfoo_SOURCES = testfoo.c
-testfoo_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
+testfoo_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
 testfoo_LDFLAGS = -L$(libdir) -lmrkcommon -L$(top_srcdir)/src/.libs -lspinfo $(plat_libs)
 
 nodist_testrusage_SOURCES = ../src/diag.c
 testrusage_SOURCES = testrusage.c
-testrusage_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
+testrusage_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
 testrusage_LDFLAGS = -L$(libdir) -lmrkcommon -L$(top_srcdir)/src/.libs -lspinfo $(plat_libs)
 
 ../src/diag.c ../src/diag.h: ../src/diag.txt

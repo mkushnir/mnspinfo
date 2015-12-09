@@ -32,7 +32,7 @@ spinfo_reinit(spinfo_ctx_t *ctx, pid_t pid, unsigned flags)
 void
 spinfo_update(spinfo_ctx_t *ctx, unsigned what)
 {
-    if (clock_gettime(CLOCK_UPTIME_FAST, &ctx->ts1) != 0) {
+    if (clock_gettime(CLOCK_MONOTONIC, &ctx->ts1) != 0) {
         FAIL("clock_gettime");
     }
     ctx->elapsed = ((TIMESPEC_TO_NSEC(ctx->ts1) -
