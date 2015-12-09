@@ -332,7 +332,7 @@ spinfo_update1(spinfo_ctx_t *ctx)
 
 
 void
-_spinfo_update2(UNUSED spinfo_ctx_t *ctx)
+_spinfo_update2(spinfo_ctx_t *ctx)
 {
     /*
      * getrusage(2), times(3)
@@ -340,12 +340,11 @@ _spinfo_update2(UNUSED spinfo_ctx_t *ctx)
     if (getrusage(RUSAGE_SELF, &ctx->proc.ru) != 0) {
         FAIL("getrusage");
     }
-
 }
 
 
 void
-spinfo_update2(UNUSED spinfo_ctx_t *ctx)
+spinfo_update2(spinfo_ctx_t *ctx)
 {
     double ticks;
     struct rusage ru;

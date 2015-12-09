@@ -17,8 +17,8 @@ plat_libs = -lprocstat -lkvm
 endif
 
 if LINUX
-plat_sources =
-plat_headers =
+plat_sources = spinfo_linux.c
+plat_headers = spinfo_linux.h
 plat_libs =
 endif
 
