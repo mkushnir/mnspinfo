@@ -9,7 +9,6 @@
 #include <mrkcommon/util.h>
 
 #include "spinfo_private.h"
-
 #include "diag.h"
 
 void

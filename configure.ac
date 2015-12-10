@@ -68,11 +68,13 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 
 AC_CHECK_FUNCS([clock_gettime memset])
-AC_CHECK_HEADERS([sys/param.h sys/socket.h sys/time.h])
+AC_FUNC_FORK
+
+AC_CHECK_HEADERS([sys/param.h sys/socket.h sys/time.h fcntl.h])
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
 AC_TYPE_UINT64_T
-
 
 AC_CHECK_LIB(procstat, procstat_close)
 AC_CHECK_LIB(kvm, kvm_close)

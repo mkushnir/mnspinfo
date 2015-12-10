@@ -1,4 +1,5 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
+AM_MAKEFLAGS = -s
 
 distdir = $(top_srcdir)/$(PACKAGE)-$(VERSION)/src
 dist_HEADERS =
@@ -17,7 +18,7 @@ plat_libs = -lprocstat -lkvm
 endif
 
 if LINUX
-plat_sources = spinfo_linux.c
+plat_sources = spinfo_linux.c linux_procutils.c
 plat_headers = spinfo_linux.h
 plat_libs =
 endif

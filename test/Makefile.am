@@ -1,6 +1,7 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
 CLEANFILES = *.core
 #CLEANFILES += *.in
+AM_MAKEFLAGS = -s
 
 noinst_PROGRAMS=testfoo testrusage
 
@@ -17,6 +18,7 @@ endif
 
 if LINUX
 plat_libs =
+noinst_PROGRAMS += testparse
 endif
 
 if DEBUG
@@ -34,6 +36,13 @@ nodist_testrusage_SOURCES = ../src/diag.c
 testrusage_SOURCES = testrusage.c
 testrusage_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
 testrusage_LDFLAGS = -L$(libdir) -lmrkcommon -L$(top_srcdir)/src/.libs -lspinfo $(plat_libs)
+
+if LINUX
+nodist_testparse_SOURCES = ../src/diag.c
+testparse_SOURCES = testparse.c
+testparse_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
+testparse_LDFLAGS = -L$(libdir) -lmrkcommon -L$(top_srcdir)/src/.libs -lspinfo $(plat_libs)
+endif
 
 ../src/diag.c ../src/diag.h: ../src/diag.txt
 	 $(AM_V_GEN) /bin/sh ./gen-diag spinfo

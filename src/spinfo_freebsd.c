@@ -4,10 +4,8 @@
 
 #include <sys/param.h>
 #include <sys/queue.h>
-#include <sys/resource.h> /* CPUSTATES */
 #include <sys/socket.h>
 #include <sys/sysctl.h>
-#include <sys/types.h>
 #include <sys/user.h>
 
 #include <libprocstat.h>
@@ -17,7 +15,6 @@
 #include <mrkcommon/util.h>
 
 #include "spinfo_private.h"
-
 #include "diag.h"
 
 static int
