@@ -26,7 +26,7 @@ nobase_include_HEADERS = spinfo.h
 
 noinst_HEADERS = $(plat_headers)
 
-libspinfo_la_SOURCES = spinfo.c $(plat_sources)
+libspinfo_la_SOURCES = spinfo.c spinfo_posix.c $(plat_sources)
 nodist_libspinfo_la_SOURCES = diag.c
 
 if DEBUG

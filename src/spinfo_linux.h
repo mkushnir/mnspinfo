@@ -9,6 +9,10 @@
 #include <sys/resource.h>
 
 
+/*
+ * Linux specific private interface
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif

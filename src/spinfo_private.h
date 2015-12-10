@@ -25,6 +25,7 @@ extern "C" {
 void spinfo_init(spinfo_ctx_t *, pid_t, unsigned);
 void spinfo_update0(spinfo_ctx_t *);
 void spinfo_update1(spinfo_ctx_t *);
+void _spinfo_update2(spinfo_ctx_t *);
 void spinfo_update2(spinfo_ctx_t *);
 void spinfo_update3(spinfo_ctx_t *);
 void spinfo_update4(spinfo_ctx_t *);

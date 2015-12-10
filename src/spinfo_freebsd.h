@@ -18,19 +18,12 @@
 /*
  * FreeBSD specific private interface
  */
+
 /*
- * vm.stats
- *  vm.stats.vm.v_interrupt_free_min
- *  vm.stats.vm.v_cache_count
- *  vm.stats.vm.v_inactive_count
- *  vm.stats.vm.v_active_count
- *  vm.stats.vm.v_wire_count
- *  vm.stats.vm.v_free_count
- *  vm.stats.vm.v_page_count
- *  vm.stats.vm.v_page_size
- *
  * hw.[ncpu|physmem|usermem|pagesize|realmem]
  * dev.cpu.*
+ *
+ * vm.stats
  * kern.cp_time(s)
  */
 #ifdef __cplusplus
@@ -95,9 +88,6 @@ typedef struct _spinfo_ctx {
 
     struct procstat *ps;
     struct kinfo_proc *procs;
-    //struct filestat_list *files;
-    //struct kinfo_kstack *kstack;
-    //struct kinfo_vmentry *vmmap;
 
     unsigned int procsz;
 } spinfo_ctx_t;

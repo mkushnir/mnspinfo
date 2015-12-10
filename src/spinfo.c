@@ -4,9 +4,9 @@
 
 #include <mrkcommon/dumpm.h>
 
-#include "diag.h"
-
 #include "spinfo_private.h"
+
+#include "diag.h"
 
 spinfo_ctx_t *
 spinfo_new(pid_t pid, unsigned flags)

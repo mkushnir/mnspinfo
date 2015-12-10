@@ -225,6 +225,14 @@ _spinfo_update1(spinfo_ctx_t *ctx)
     size_t sz;
     /*
      * memory
+     *  vm.stats.vm.v_interrupt_free_min
+     *  vm.stats.vm.v_cache_count
+     *  vm.stats.vm.v_inactive_count
+     *  vm.stats.vm.v_active_count
+     *  vm.stats.vm.v_wire_count
+     *  vm.stats.vm.v_free_count
+     *  vm.stats.vm.v_page_count
+     *  vm.stats.vm.v_page_size
      */
 #define SPIU1_VM(n)                            \
     sz = sizeof(ctx->n);                       \
@@ -331,51 +339,6 @@ spinfo_update1(spinfo_ctx_t *ctx)
 }
 
 
-void
-_spinfo_update2(spinfo_ctx_t *ctx)
-{
-    /*
-     * getrusage(2), times(3)
-     */
-    if (getrusage(RUSAGE_SELF, &ctx->proc.ru) != 0) {
-        FAIL("getrusage");
-    }
-}
-
-
-void
-spinfo_update2(spinfo_ctx_t *ctx)
-{
-    double ticks;
-    struct rusage ru;
-    double udiff, sdiff;
-    double irss;
-
-    /*
-     * getrusage(2), times(3)
-     */
-    if (getrusage(RUSAGE_SELF, &ru) != 0) {
-        FAIL("getrusage");
-    }
-
-    ticks = (double)ctx->elapsed * (double)ctx->sys.statclock / 1000.0;
-
-#define U2DIFF(name) ((double)(ru.name - ctx->proc.ru.name))
-
-    irss = (U2DIFF(ru_ixrss) + U2DIFF(ru_idrss) + U2DIFF(ru_isrss)) * 1024.0 / ticks;
-
-    udiff = (double)(TIMEVAL_TO_USEC(ru.ru_utime) -
-                     TIMEVAL_TO_USEC(ctx->proc.ru.ru_utime)) / 1000.0;
-    sdiff = (double)(TIMEVAL_TO_USEC(ru.ru_stime) -
-                     TIMEVAL_TO_USEC(ctx->proc.ru.ru_stime)) / 1000.0;
-
-    ctx->proc.cpupct = (udiff + sdiff) / (double)ctx->elapsed * 100.0;
-    //TRACE("%%PCPU=%lf IRSS=%lf", ctx->proc.cpupct, irss);
-
-    ctx->proc.ru = ru;
-}
-
-
 static void
 _spinfo_update3(spinfo_ctx_t *ctx)
 {
@@ -415,6 +378,12 @@ spinfo_update3(spinfo_ctx_t *ctx)
         FAIL("procstat_open_sysctl");
     }
     _spinfo_update3(ctx);
+}
+
+
+void
+spinfo_update4(UNUSED spinfo_ctx_t *ctx)
+{
 }
 
 
