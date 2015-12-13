@@ -20,25 +20,37 @@ spinfo_update0(spinfo_ctx_t *ctx)
      * /proc/meminfo
      * /proc/cpuinfo
      */
-    ctx->sys.realmem = 0;
-    ctx->sys.physmem = 0;
-    ctx->sys.usermem = 0;
     ctx->sys.statclock = sysconf(_SC_CLK_TCK);
     //TRACE("statclock=%ld", ctx->sys.statclock);
-    ctx->sys.pagesize = 0;
-    ctx->sys.ncpu = 0;
+    ctx->sys.pagesize = sysconf(_SC_PAGESIZE);
+
+    if (parse_cpuinfo(ctx) != 0) {
+        FAIL("parse_cpuinfo");
+    }
+    if (parse_meminfo(ctx) != 0) {
+        FAIL("parse_meminfo");
+    }
+}
+
+
+static void
+_spinfo_update1(UNUSED spinfo_ctx_t *ctx)
+{
+    /*
+     * /proc/stat
+     */
+    if (parse_proc_stat_init(ctx) != 0) {
+        FAIL("parse_proc_stat_init");
+    }
 }
 
 
 void
 spinfo_update1(UNUSED spinfo_ctx_t *ctx)
 {
-    /*
-     * /proc/meminfo
-     */
-    /*
-     * /proc/stat
-     */
+    if (parse_proc_stat_update(ctx) != 0) {
+        FAIL("parse_proc_stat_update");
+    }
 }
 
 
@@ -48,7 +60,14 @@ spinfo_update3(UNUSED spinfo_ctx_t *ctx)
     /*
      * /proc/PID/stat
      * /proc/PID/statm
+     * /proc/PID/fdinfo/
      */
+    if (parse_proc_pid_statm(ctx) != 0) {
+        FAIL("parse_proc_pid_statm");
+    }
+    if (parse_proc_pid_fdinfo(ctx) != 0) {
+        FAIL("parse_proc_pid_fdinfo");
+    }
 }
 
 
@@ -71,12 +90,12 @@ spinfo_init(spinfo_ctx_t *ctx, pid_t pid, unsigned flags)
     }
 
     spinfo_update0(ctx);
-    // 1
+    _spinfo_update1(ctx);
     _spinfo_update2(ctx);
 
     ctx->flags = flags;
     ctx->proc.pid = pid;
-    // 3
+    spinfo_update3(ctx);
 
 }
 

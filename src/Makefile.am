@@ -6,7 +6,7 @@ dist_HEADERS =
 
 BUILT_SOURCES = diag.c diag.h
 EXTRA_DIST = diag.txt gen-diag
-CLEANFILES = $(BUILT_SOURCES) *.core
+CLEANFILES = $(BUILT_SOURCES) *.core core
 #CLEANFILES += *.in
 
 lib_LTLIBRARIES = libspinfo.la

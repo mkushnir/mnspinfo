@@ -7,47 +7,30 @@
 #include "spinfo_private.h"
 #include "diag.h"
 
-#define CPU_INFO_KVP_SETTER_NAME(n) KVP_SETTER_NAME(cpu_info_t, n)
-#define CPU_INFO_KVP_SETTER_INT(n) KVP_SETTER_INT(cpu_info_t, n)
-#define CPU_INFO_KVP_SETTER_STR(n) KVP_SETTER_STR(cpu_info_t, n)
-
-CPU_INFO_KVP_SETTER_INT(cpuid)
-CPU_INFO_KVP_SETTER_STR(vendor_id)
-CPU_INFO_KVP_SETTER_INT(cpu_family)
-CPU_INFO_KVP_SETTER_INT(model)
-CPU_INFO_KVP_SETTER_STR(model_name)
+CPUINFO_KVP_SETTER_INT(cpuid)
 
 proc_fieldesc_t fdesc[] = {
-    {"processor", CPU_INFO_KVP_SETTER_NAME(cpuid)},
-    {"vendor_id", CPU_INFO_KVP_SETTER_NAME(vendor_id)},
-    {"cpu family", CPU_INFO_KVP_SETTER_NAME(cpu_family)},
-    {"model", CPU_INFO_KVP_SETTER_NAME(model)},
-    {"model name", CPU_INFO_KVP_SETTER_NAME(model_name)},
+    {"processor", CPUINFO_KVP_SETTER_NAME(cpuid)},
 };
 
 static int
-rcb(UNUSED proc_base_t *proc, UNUSED void *udata)
+cpuinfo_rcb(UNUSED proc_base_t *proc, void *udata)
 {
-    cpu_info_t *f = (cpu_info_t *)proc;
-    struct {
-        int ncpu;
-    } *params = udata;
+    spinfo_ctx_t *ctx = udata;
 
-    ++(params->ncpu);
-    TRACE("[%d]=%s (%s)", f->cpuid, f->vendor_id, f->model_name);
+    ++(ctx->sys.ncpu);
+    //TRACE("[%d]=%s (%s)", f->cpuid, f->vendor_id, f->model_name);
     return 0;
 }
+
 
 int
 main(void)
 {
-    cpu_info_t proc;
+    cpuinfo_t proc;
+    spinfo_ctx_t ctx;
 
-    struct {
-        int ncpu;
-    } params;
-
-    params.ncpu = 0;
+    ctx.sys.ncpu = 0;
 
     if (parse_kvp("/proc/cpuinfo",
                   (proc_base_t *)&proc,
@@ -56,10 +39,17 @@ main(void)
                   &fdesc[countof(fdesc) - 1],
                   ':',
                   '\n',
-                  rcb,
-                  &params) != 0) {
+                  cpuinfo_rcb,
+                  &ctx) != 0) {
         FAIL("parse_kvp");
     }
-    TRACE("ncpu=%d", params.ncpu);
+    TRACE("ncpu=%d", ctx.sys.ncpu);
+
+    ctx.sys.ncpu = 0;
+
+    if (parse_cpuinfo(&ctx) != 0) {
+        FAIL("parse_cpuinfo");
+    }
+    TRACE("ncpu=%d", ctx.sys.ncpu);
     return 0;
 }
