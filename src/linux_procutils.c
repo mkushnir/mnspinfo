@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
+//#define TRRET_DEBUG
 #include <mrkcommon/dumpm.h>
 #include <mrkcommon/traversedir.h>
 #include <mrkcommon/util.h>
