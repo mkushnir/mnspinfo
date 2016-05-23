@@ -36,9 +36,9 @@ else
 DEBUG_FLAGS = -DNDEBUG -O3
 endif
 
-libspinfo_la_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
+libspinfo_la_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 @MRKCOMMON_LOCAL_CFLAGS@ @_GNU_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
 
-libspinfo_la_LDFLAGS = -version-info 0:0:0 -L$(libdir) -lmrkcommon $(plat_libs)
+libspinfo_la_LDFLAGS = -version-info 0:0:0 -L$(libdir) -lmrkcommon @MRKCOMMON_LOCAL_LDFLAGS@ $(plat_libs)
 
 SUBDIRS = .
 
