@@ -438,9 +438,10 @@ int
 parse_proc_pid_statm(spinfo_ctx_t *ctx)
 {
     proc_pid_statm_t proc;
+    proc_pid_statm_t *p = &proc;
 
     return parse_kvp("/proc/self/statm",
-                     (proc_base_t *)&proc,
+                     (proc_base_t *)p,
                      proc_pid_statm_fdesc,
                      countof(proc_pid_statm_fdesc),
                      &proc_pid_statm_fdesc[countof(proc_pid_statm_fdesc) - 1],
