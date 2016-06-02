@@ -5,12 +5,10 @@ AM_MAKEFLAGS = -s
 
 noinst_PROGRAMS=testfoo testrusage
 
-distdir = $(top_srcdir)/$(PACKAGE)-$(VERSION)/test
-dist_HEADERS = unittest.h
-
 BUILT_SOURCES = ../src/diag.c ../src/diag.h
 
-noinst_HEADERS = ../src/spinfo.h
+noinst_HEADERS = ../src/spinfo.h unittest.h
+
 
 if FREEBSD
 plat_libs = -lprocstat -lkvm
