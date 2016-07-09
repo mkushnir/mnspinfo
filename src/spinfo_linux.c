@@ -61,12 +61,16 @@ spinfo_update3(UNUSED spinfo_ctx_t *ctx)
      * /proc/PID/stat
      * /proc/PID/statm
      * /proc/PID/fdinfo/
+     * /proc/PID/fd/
      */
     if (parse_proc_pid_statm(ctx) != 0) {
         FAIL("parse_proc_pid_statm");
     }
     if (parse_proc_pid_fdinfo(ctx) != 0) {
         FAIL("parse_proc_pid_fdinfo");
+    }
+    if (parse_proc_pid_fd(ctx) != 0) {
+        FAIL("parse_proc_pid_fd");
     }
 }
 

@@ -389,6 +389,7 @@ int parse_proc_stat_init(spinfo_ctx_t *);
 int parse_proc_stat_update(spinfo_ctx_t *);
 int parse_proc_pid_statm(spinfo_ctx_t *);
 int parse_proc_pid_fdinfo(spinfo_ctx_t *);
+int parse_proc_pid_fd(spinfo_ctx_t *);
 
 #ifdef __cplusplus
 }

@@ -522,3 +522,40 @@ parse_proc_pid_fdinfo(spinfo_ctx_t *ctx)
     ctx->proc.nsockets = 0;
     return traverse_dir("/proc/self/fdinfo", fdinfo_cb, ctx);
 }
+
+
+static int
+fd_cb(const char *path, struct dirent *de, void *udata)
+{
+    int res;
+
+    res = 0;
+    if (de != NULL) {
+        spinfo_ctx_t *ctx = udata;
+        char *fpath;
+        char buf[1024];
+
+        ++ctx->proc.nfiles;
+
+        fpath = path_join(path, de->d_name);
+        if (readlink(fpath, buf, sizeof(buf)) == 0) {
+            if (strstr(buf, "socket:") == buf) {
+                ++ctx->proc.nsockets;
+            }
+        }
+        free(fpath);
+    }
+    return res;
+}
+
+
+int
+parse_proc_pid_fd(spinfo_ctx_t *ctx)
+{
+    //ctx->proc.nfiles = 0;
+    //ctx->proc.nvnodes = 0;
+    ctx->proc.nsockets = 0;
+    return traverse_dir("/proc/self/fd", fd_cb, ctx);
+}
+
+
