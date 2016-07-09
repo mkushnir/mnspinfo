@@ -534,11 +534,13 @@ fd_cb(const char *path, struct dirent *de, void *udata)
         spinfo_ctx_t *ctx = udata;
         char *fpath;
         char buf[1024];
+        size_t sz;
 
         ++ctx->proc.nfiles;
 
         fpath = path_join(path, de->d_name);
-        if (readlink(fpath, buf, sizeof(buf)) == 0) {
+        if ((sz = readlink(fpath, buf, sizeof(buf))) > 0) {
+            buf[sz] = '\0';
             if (strstr(buf, "socket:") == buf) {
                 ++ctx->proc.nsockets;
             }
