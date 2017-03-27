@@ -43,7 +43,7 @@ testparse_LDFLAGS = -L$(libdir) -lmrkcommon -L$(top_srcdir)/src/.libs -lspinfo $
 endif
 
 ../src/diag.c ../src/diag.h: ../src/diag.txt
-	 $(AM_V_GEN) /bin/sh ./gen-diag spinfo
+	 $(AM_V_GEN) cat diag.txt | sort -u | /bin/sh ./gen-diag spinfo
 
 testrun: all
 	for i in $(noinst_PROGRAMS); do if test -x ./$$i; then LD_LIBRARY_PATH=$(libdir) ./$$i; fi; done;
