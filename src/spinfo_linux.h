@@ -321,6 +321,11 @@ typedef struct _proc_pid_statm {
     long dirty;
 } proc_pid_statm_t;
 
+
+#ifdef SPINFO_CTX_T_DEFINED
+#error "SPINFO_CTX_T_DEFINED cannot be defined here"
+#endif
+
 typedef struct _spinfo_ctx {
     /*
      * public interface
