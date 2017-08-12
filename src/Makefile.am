@@ -1,8 +1,9 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
 AM_MAKEFLAGS = -s
 
+diags = diag.txt
 BUILT_SOURCES = diag.c diag.h
-EXTRA_DIST = diag.txt gen-diag
+EXTRA_DIST = $(diags)
 CLEANFILES = $(BUILT_SOURCES) *.core core
 #CLEANFILES += *.in
 
@@ -36,12 +37,12 @@ endif
 
 libspinfo_la_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 @MRKCOMMON_LOCAL_CFLAGS@ @_GNU_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
 
-libspinfo_la_LDFLAGS = -version-info 0:0:0 -L$(libdir) -lmrkcommon @MRKCOMMON_LOCAL_LDFLAGS@ $(plat_libs)
+libspinfo_la_LDFLAGS = -version-info 0:0:0 -L$(libdir) -lmrkcommon -lmndiag @MRKCOMMON_LOCAL_LDFLAGS@ $(plat_libs)
 
 SUBDIRS = .
 
-diag.c diag.h: diag.txt
-	 $(AM_V_GEN) cat diag.txt | sort -u | /bin/sh ./gen-diag spinfo
+diag.c diag.h: $(diags)
+	$(AM_V_GEN) cat $(diags) | sort -u >diag.txt.tmp && mndiagen -S diag.txt.tmp -L spinfo -H diag.h -C diag.c *.[ch]
 
 run: all
 	for i in $(bin_PROGRAMS); do if test -x ./$$i; then LD_LIBRARY_PATH=$(libdir) ./$$i; fi; done;
