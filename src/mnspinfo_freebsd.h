@@ -1,5 +1,5 @@
-#ifndef SPINFO_FREEBSD_H_DEFINED
-#define SPINFO_FREEBSD_H_DEFINED
+#ifndef MNSPINFO_FREEBSD_H_DEFINED
+#define MNSPINFO_FREEBSD_H_DEFINED
 
 #include <time.h>
 
@@ -31,11 +31,11 @@ extern "C" {
 #endif
 
 
-#ifdef SPINFO_CTX_T_DEFINED
-#error "SPINFO_CTX_T_DEFINED cannot be defined here"
+#ifdef MNSPINFO_CTX_T_DEFINED
+#error "MNSPINFO_CTX_T_DEFINED cannot be defined here"
 #endif
 
-typedef struct _spinfo_ctx {
+typedef struct _mnspinfo_ctx {
     /*
      * public interface
      */
@@ -90,13 +90,13 @@ typedef struct _spinfo_ctx {
     struct kinfo_proc *procs;
 
     unsigned int procsz;
-} spinfo_ctx_t;
-#define SPINFO_CTX_T_DEFINED
+} mnspinfo_ctx_t;
+#define MNSPINFO_CTX_T_DEFINED
 
 
-typedef int (*spinfo_proc_cb_t)(spinfo_ctx_t *, struct kinfo_proc *, void *);
+typedef int (*mnspinfo_proc_cb_t)(mnspinfo_ctx_t *, struct kinfo_proc *, void *);
 
 #ifdef __cplusplus
 }
 #endif
-#endif /* SPINFO_FREEBSD_H_DEFINED */
+#endif /* MNSPINFO_FREEBSD_H_DEFINED */

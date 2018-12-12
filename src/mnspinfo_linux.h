@@ -1,5 +1,5 @@
-#ifndef SPINFO_LINUX_H_DEFINED
-#define SPINFO_LINUX_H_DEFINED
+#ifndef MNSPINFO_LINUX_H_DEFINED
+#define MNSPINFO_LINUX_H_DEFINED
 
 #include <stdint.h>
 #include <time.h>
@@ -322,11 +322,11 @@ typedef struct _proc_pid_statm {
 } proc_pid_statm_t;
 
 
-#ifdef SPINFO_CTX_T_DEFINED
-#error "SPINFO_CTX_T_DEFINED cannot be defined here"
+#ifdef MNSPINFO_CTX_T_DEFINED
+#error "MNSPINFO_CTX_T_DEFINED cannot be defined here"
 #endif
 
-typedef struct _spinfo_ctx {
+typedef struct _mnspinfo_ctx {
     /*
      * public interface
      */
@@ -373,8 +373,8 @@ typedef struct _spinfo_ctx {
      */
     proc_stat_cpu_t pscpu;
     proc_pid_statm_t statm;
-} spinfo_ctx_t;
-#define SPINFO_CTX_T_DEFINED
+} mnspinfo_ctx_t;
+#define MNSPINFO_CTX_T_DEFINED
 
 
 int parse_kvp(const char *,
@@ -388,15 +388,15 @@ int parse_kvp(const char *,
                     void *);
 
 
-int parse_cpuinfo(spinfo_ctx_t *);
-int parse_meminfo(spinfo_ctx_t *);
-int parse_proc_stat_init(spinfo_ctx_t *);
-int parse_proc_stat_update(spinfo_ctx_t *);
-int parse_proc_pid_statm(spinfo_ctx_t *);
-int parse_proc_pid_fdinfo(spinfo_ctx_t *);
-int parse_proc_pid_fd(spinfo_ctx_t *);
+int parse_cpuinfo(mnspinfo_ctx_t *);
+int parse_meminfo(mnspinfo_ctx_t *);
+int parse_proc_stat_init(mnspinfo_ctx_t *);
+int parse_proc_stat_update(mnspinfo_ctx_t *);
+int parse_proc_pid_statm(mnspinfo_ctx_t *);
+int parse_proc_pid_fdinfo(mnspinfo_ctx_t *);
+int parse_proc_pid_fd(mnspinfo_ctx_t *);
 
 #ifdef __cplusplus
 }
 #endif
-#endif /* SPINFO_LINUX_H_DEFINED */
+#endif /* MNSPINFO_LINUX_H_DEFINED */

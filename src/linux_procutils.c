@@ -10,7 +10,7 @@
 #include <mrkcommon/traversedir.h>
 #include <mrkcommon/util.h>
 
-#include "spinfo_private.h"
+#include "mnspinfo_private.h"
 #include "diag.h"
 
 /*
@@ -203,7 +203,7 @@ static proc_fieldesc_t cpuinfo_fdesc[] = {
 static int
 cpuinfo_rcb(UNUSED proc_base_t *proc, void *udata)
 {
-    spinfo_ctx_t *ctx = udata;
+    mnspinfo_ctx_t *ctx = udata;
 
     ++(ctx->sys.ncpu);
     //TRACE("[%d]=%s (%s)", f->cpuid, f->vendor_id, f->model_name);
@@ -212,7 +212,7 @@ cpuinfo_rcb(UNUSED proc_base_t *proc, void *udata)
 
 
 int
-parse_cpuinfo(spinfo_ctx_t *ctx)
+parse_cpuinfo(mnspinfo_ctx_t *ctx)
 {
     cpuinfo_t proc;
 
@@ -249,7 +249,7 @@ static int
 meminfo_rcb(proc_base_t *proc, void *udata)
 {
     meminfo_t *meminfo = (meminfo_t *)proc;
-    spinfo_ctx_t *ctx = udata;
+    mnspinfo_ctx_t *ctx = udata;
 
     ctx->sys.realmem = meminfo->mem_total * ctx->sys.pagesize;
     ctx->sys.physmem = (meminfo->direct_map_4k + meminfo->direct_map_2m) *
@@ -268,7 +268,7 @@ meminfo_rcb(proc_base_t *proc, void *udata)
 
 
 int
-parse_meminfo(spinfo_ctx_t *ctx)
+parse_meminfo(mnspinfo_ctx_t *ctx)
 {
     meminfo_t proc;
 
@@ -296,7 +296,7 @@ set_proc_stat_cpu(proc_base_t *proc,
                   UNUSED void *udata)
 {
     UNUSED proc_stat_t *f = (proc_stat_t *)proc;
-    UNUSED spinfo_ctx_t *ctx = udata;
+    UNUSED mnspinfo_ctx_t *ctx = udata;
     //TRACE("val='%s'", val);
     if (sscanf(val, "%ld %ld %ld %ld %ld %ld %ld %ld %ld %ld",
         &ctx->pscpu.user,
@@ -322,7 +322,7 @@ static proc_fieldesc_t proc_stat_fdesc_init[] = {
 
 
 int
-parse_proc_stat_init(spinfo_ctx_t *ctx)
+parse_proc_stat_init(mnspinfo_ctx_t *ctx)
 {
     proc_stat_t proc;
 
@@ -345,7 +345,7 @@ update_proc_stat_cpu(UNUSED proc_base_t *proc,
                      char *val,
                      void *udata)
 {
-    spinfo_ctx_t *ctx = udata;
+    mnspinfo_ctx_t *ctx = udata;
     proc_stat_cpu_t pscpu;
     double user, nice, system, idle, steal, guest, guest_nice, total;
 
@@ -384,7 +384,7 @@ static proc_fieldesc_t proc_stat_fdesc_update[] = {
 
 
 int
-parse_proc_stat_update(spinfo_ctx_t *ctx)
+parse_proc_stat_update(mnspinfo_ctx_t *ctx)
 {
     proc_stat_t proc;
 
@@ -407,7 +407,7 @@ set_proc_pid_statm(UNUSED proc_base_t *proc,
                    char *val,
                    void *udata)
 {
-    spinfo_ctx_t *ctx = udata;
+    mnspinfo_ctx_t *ctx = udata;
 
     if (sscanf(key, "%ld", &ctx->statm.vsize) < 1) {
         perror("sscanf");
@@ -435,7 +435,7 @@ static proc_fieldesc_t proc_pid_statm_fdesc[] = {
 
 
 int
-parse_proc_pid_statm(spinfo_ctx_t *ctx)
+parse_proc_pid_statm(mnspinfo_ctx_t *ctx)
 {
     proc_pid_statm_t proc;
     proc_pid_statm_t *p = &proc;
@@ -459,7 +459,7 @@ set_proc_fdinfo_flags(UNUSED proc_base_t *proc,
                       char *val,
                       void *udata)
 {
-    spinfo_ctx_t *ctx = udata;
+    mnspinfo_ctx_t *ctx = udata;
     unsigned long flags;
 
     if (sscanf(val, "%lo", &flags) != 1) {
@@ -489,7 +489,7 @@ fdinfo_cb(const char *path, struct dirent *de, void *udata)
 
     res = 0;
     if (de != NULL) {
-        spinfo_ctx_t *ctx = udata;
+        mnspinfo_ctx_t *ctx = udata;
         char *fpath;
 
         ++ctx->proc.nfiles;
@@ -515,7 +515,7 @@ fdinfo_cb(const char *path, struct dirent *de, void *udata)
 
 
 int
-parse_proc_pid_fdinfo(spinfo_ctx_t *ctx)
+parse_proc_pid_fdinfo(mnspinfo_ctx_t *ctx)
 {
     ctx->proc.nfiles = 0;
     ctx->proc.nvnodes = 0;
@@ -531,7 +531,7 @@ fd_cb(const char *path, struct dirent *de, void *udata)
 
     res = 0;
     if (de != NULL) {
-        spinfo_ctx_t *ctx = udata;
+        mnspinfo_ctx_t *ctx = udata;
         char *fpath;
         char buf[1024];
         size_t sz;
@@ -552,7 +552,7 @@ fd_cb(const char *path, struct dirent *de, void *udata)
 
 
 int
-parse_proc_pid_fd(spinfo_ctx_t *ctx)
+parse_proc_pid_fd(mnspinfo_ctx_t *ctx)
 {
     //ctx->proc.nfiles = 0;
     //ctx->proc.nvnodes = 0;

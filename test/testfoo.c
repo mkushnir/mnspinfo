@@ -11,7 +11,7 @@
 #include "diag.h"
 #include "unittest.h"
 
-#include <spinfo.h>
+#include <mnspinfo.h>
 
 #ifndef NDEBUG
 const char *_malloc_options = "AJ";
@@ -43,11 +43,11 @@ bar(void)
 static void
 run(pid_t pid)
 {
-    spinfo_ctx_t *sp;
-    sp = spinfo_new(pid, SPINFO_SELF);
+    mnspinfo_ctx_t *sp;
+    sp = mnspinfo_new(pid, MNSPINFO_SELF);
 
     while (1) {
-        spinfo_update(sp, SPINFO_U1|SPINFO_U2|SPINFO_U3);
+        mnspinfo_update(sp, MNSPINFO_U1|MNSPINFO_U2|MNSPINFO_U3);
         TRACE("SYS real=%ld phys=%ld user=%ld used=%ld/%lf %%cpu=%lf "
               "PROC vsz=%ld rss=%ld %%mem=%lf %%cpu=%lf files=%ld/%ld/%ld",
               sp->sys.realmem,
@@ -67,7 +67,7 @@ run(pid_t pid)
         sleep(2);
         bar();
     }
-    spinfo_destroy(&sp);
+    mnspinfo_destroy(&sp);
 }
 
 

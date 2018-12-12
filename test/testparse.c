@@ -4,7 +4,7 @@
 #include <mrkcommon/dumpm.h>
 #include <mrkcommon/util.h>
 
-#include "spinfo_private.h"
+#include "mnspinfo_private.h"
 #include "diag.h"
 
 CPUINFO_KVP_SETTER_INT(cpuid)
@@ -16,7 +16,7 @@ proc_fieldesc_t fdesc[] = {
 static int
 cpuinfo_rcb(UNUSED proc_base_t *proc, void *udata)
 {
-    spinfo_ctx_t *ctx = udata;
+    mnspinfo_ctx_t *ctx = udata;
 
     ++(ctx->sys.ncpu);
     //TRACE("[%d]=%s (%s)", f->cpuid, f->vendor_id, f->model_name);
@@ -28,7 +28,7 @@ int
 main(void)
 {
     cpuinfo_t proc;
-    spinfo_ctx_t ctx;
+    mnspinfo_ctx_t ctx;
 
     ctx.sys.ncpu = 0;
 

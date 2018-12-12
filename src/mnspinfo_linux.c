@@ -5,7 +5,7 @@
 #include <mrkcommon/dumpm.h>
 #include <mrkcommon/util.h>
 
-#include "spinfo_private.h"
+#include "mnspinfo_private.h"
 #include "diag.h"
 
 /*
@@ -14,7 +14,7 @@
 
 
 void
-spinfo_update0(spinfo_ctx_t *ctx)
+mnspinfo_update0(mnspinfo_ctx_t *ctx)
 {
     /*
      * /proc/meminfo
@@ -34,7 +34,7 @@ spinfo_update0(spinfo_ctx_t *ctx)
 
 
 static void
-_spinfo_update1(UNUSED spinfo_ctx_t *ctx)
+_mnspinfo_update1(UNUSED mnspinfo_ctx_t *ctx)
 {
     /*
      * /proc/stat
@@ -46,7 +46,7 @@ _spinfo_update1(UNUSED spinfo_ctx_t *ctx)
 
 
 void
-spinfo_update1(UNUSED spinfo_ctx_t *ctx)
+mnspinfo_update1(UNUSED mnspinfo_ctx_t *ctx)
 {
     if (parse_proc_stat_update(ctx) != 0) {
         FAIL("parse_proc_stat_update");
@@ -55,7 +55,7 @@ spinfo_update1(UNUSED spinfo_ctx_t *ctx)
 
 
 void
-spinfo_update3(UNUSED spinfo_ctx_t *ctx)
+mnspinfo_update3(UNUSED mnspinfo_ctx_t *ctx)
 {
     /*
      * /proc/PID/stat
@@ -76,15 +76,15 @@ spinfo_update3(UNUSED spinfo_ctx_t *ctx)
 
 
 void
-spinfo_update4(UNUSED spinfo_ctx_t *ctx)
+mnspinfo_update4(UNUSED mnspinfo_ctx_t *ctx)
 {
 }
 
 
 void
-spinfo_init(spinfo_ctx_t *ctx, pid_t pid, unsigned flags)
+mnspinfo_init(mnspinfo_ctx_t *ctx, pid_t pid, unsigned flags)
 {
-    //memset(ctx, 0, sizeof(spinfo_ctx_t));
+    //memset(ctx, 0, sizeof(mnspinfo_ctx_t));
 
     ctx->ts0.tv_sec = 0;
     ctx->ts0.tv_nsec = 0;
@@ -93,18 +93,18 @@ spinfo_init(spinfo_ctx_t *ctx, pid_t pid, unsigned flags)
         FAIL("clock_gettime");
     }
 
-    spinfo_update0(ctx);
-    _spinfo_update1(ctx);
-    _spinfo_update2(ctx);
+    mnspinfo_update0(ctx);
+    _mnspinfo_update1(ctx);
+    _mnspinfo_update2(ctx);
 
     ctx->flags = flags;
     ctx->proc.pid = pid;
-    spinfo_update3(ctx);
+    mnspinfo_update3(ctx);
 
 }
 
 
 void
-spinfo_fini(UNUSED spinfo_ctx_t *ctx)
+mnspinfo_fini(UNUSED mnspinfo_ctx_t *ctx)
 {
 }

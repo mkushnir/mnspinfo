@@ -8,11 +8,11 @@
 #include <mrkcommon/dumpm.h>
 #include <mrkcommon/util.h>
 
-#include "spinfo_private.h"
+#include "mnspinfo_private.h"
 #include "diag.h"
 
 void
-_spinfo_update2(spinfo_ctx_t *ctx)
+_mnspinfo_update2(mnspinfo_ctx_t *ctx)
 {
     /*
      * getrusage(2), times(3)
@@ -24,7 +24,7 @@ _spinfo_update2(spinfo_ctx_t *ctx)
 
 
 void
-spinfo_update2(spinfo_ctx_t *ctx)
+mnspinfo_update2(mnspinfo_ctx_t *ctx)
 {
     double ticks;
     struct rusage ru;

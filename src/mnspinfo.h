@@ -1,5 +1,5 @@
-#ifndef SPINFO_H_DEFINED
-#define SPINFO_H_DEFINED
+#ifndef MNSPINFO_H_DEFINED
+#define MNSPINFO_H_DEFINED
 
 #include <unistd.h>
 
@@ -11,8 +11,8 @@
 extern "C" {
 #endif
 
-#ifndef SPINFO_CTX_T_DEFINED
-typedef struct _spinfo_ctx {
+#ifndef MNSPINFO_CTX_T_DEFINED
+typedef struct _mnspinfo_ctx {
     /*
      * public interface
      */
@@ -51,26 +51,26 @@ typedef struct _spinfo_ctx {
     /*
      * private interface ...
      */
-} spinfo_ctx_t;
-#define SPINFO_CTX_T_DEFINED
+} mnspinfo_ctx_t;
+#define MNSPINFO_CTX_T_DEFINED
 #endif
 
-#define SPINFO_SELF 1
-#define SPINFO_TREE 2
-spinfo_ctx_t *spinfo_new(pid_t, unsigned);
-void spinfo_reinit(spinfo_ctx_t *, pid_t, unsigned);
+#define MNSPINFO_SELF 1
+#define MNSPINFO_TREE 2
+mnspinfo_ctx_t *mnspinfo_new(pid_t, unsigned);
+void mnspinfo_reinit(mnspinfo_ctx_t *, pid_t, unsigned);
 
-#define SPINFO_U0 0x01 /* system constants */
-#define SPINFO_U1 0x02 /* system cpu and memory usage */
-#define SPINFO_U2 0x04 /* process resource usage */
-#define SPINFO_U3 0x08 /* process files and memory */
-#define SPINFO_U4 0x10 /* process limits */
-#define SPINFO_UZ 0xffffffff
-void spinfo_update(spinfo_ctx_t *, unsigned);
+#define MNSPINFO_U0 0x01 /* system constants */
+#define MNSPINFO_U1 0x02 /* system cpu and memory usage */
+#define MNSPINFO_U2 0x04 /* process resource usage */
+#define MNSPINFO_U3 0x08 /* process files and memory */
+#define MNSPINFO_U4 0x10 /* process limits */
+#define MNSPINFO_UZ 0xffffffff
+void mnspinfo_update(mnspinfo_ctx_t *, unsigned);
 
-void spinfo_destroy(spinfo_ctx_t **);
+void mnspinfo_destroy(mnspinfo_ctx_t **);
 
 #ifdef __cplusplus
 }
 #endif
-#endif /* SPINFO_H_DEFINED */
+#endif /* MNSPINFO_H_DEFINED */

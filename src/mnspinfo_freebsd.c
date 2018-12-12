@@ -14,11 +14,11 @@
 #include <mrkcommon/dumpm.h>
 #include <mrkcommon/util.h>
 
-#include "spinfo_private.h"
+#include "mnspinfo_private.h"
 #include "diag.h"
 
 static int
-testfiles(spinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
+testfiles(mnspinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
 {
     struct filestat_list *files;
     struct filestat *fs;
@@ -71,7 +71,7 @@ testfiles(spinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
 
 
 UNUSED static int
-testkstack(spinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
+testkstack(mnspinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
 {
     unsigned int i, sz;
     struct kinfo_kstack *kstack;
@@ -95,7 +95,7 @@ testkstack(spinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
 
 
 static int
-testvmmap(spinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
+testvmmap(mnspinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
 {
     unsigned int i, sz;
     uint64_t vsz_total, res_total;
@@ -150,7 +150,7 @@ testvmmap(spinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
 
 
 static int
-traverse_procs(spinfo_ctx_t *ctx, spinfo_proc_cb_t cb, void *udata)
+traverse_procs(mnspinfo_ctx_t *ctx, mnspinfo_proc_cb_t cb, void *udata)
 {
     unsigned int i;
 
@@ -163,7 +163,7 @@ traverse_procs(spinfo_ctx_t *ctx, spinfo_proc_cb_t cb, void *udata)
 }
 
 void
-spinfo_update0(spinfo_ctx_t *ctx)
+mnspinfo_update0(mnspinfo_ctx_t *ctx)
 {
     size_t sz;
 
@@ -217,7 +217,7 @@ spinfo_update0(spinfo_ctx_t *ctx)
 
 
 static void
-_spinfo_update1(spinfo_ctx_t *ctx)
+_mnspinfo_update1(mnspinfo_ctx_t *ctx)
 {
     size_t sz;
     /*
@@ -300,7 +300,7 @@ _spinfo_update1(spinfo_ctx_t *ctx)
 
 
 void
-spinfo_update1(spinfo_ctx_t *ctx)
+mnspinfo_update1(mnspinfo_ctx_t *ctx)
 {
     int i;
     uint64_t cp_time[CPUSTATES];
@@ -312,7 +312,7 @@ spinfo_update1(spinfo_ctx_t *ctx)
         cp_time[i] = ctx->cp_time0[i];
     }
 
-    _spinfo_update1(ctx);
+    _mnspinfo_update1(ctx);
 
     //TRACE("elapsed=%ld", ctx->elapsed);
     if (ctx->elapsed > 0) {
@@ -337,7 +337,7 @@ spinfo_update1(spinfo_ctx_t *ctx)
 
 
 static void
-_spinfo_update3(spinfo_ctx_t *ctx)
+_mnspinfo_update3(mnspinfo_ctx_t *ctx)
 {
     int op;
 
@@ -368,24 +368,24 @@ _spinfo_update3(spinfo_ctx_t *ctx)
 
 
 void
-spinfo_update3(spinfo_ctx_t *ctx)
+mnspinfo_update3(mnspinfo_ctx_t *ctx)
 {
-    spinfo_fini(ctx);
+    mnspinfo_fini(ctx);
     if ((ctx->ps = procstat_open_sysctl()) == NULL) {
         FAIL("procstat_open_sysctl");
     }
-    _spinfo_update3(ctx);
+    _mnspinfo_update3(ctx);
 }
 
 
 void
-spinfo_update4(UNUSED spinfo_ctx_t *ctx)
+mnspinfo_update4(UNUSED mnspinfo_ctx_t *ctx)
 {
 }
 
 
 void
-spinfo_init(spinfo_ctx_t *ctx, pid_t pid, unsigned flags)
+mnspinfo_init(mnspinfo_ctx_t *ctx, pid_t pid, unsigned flags)
 {
     ctx->ts0.tv_sec = 0;
     ctx->ts0.tv_nsec = 0;
@@ -394,20 +394,20 @@ spinfo_init(spinfo_ctx_t *ctx, pid_t pid, unsigned flags)
         FAIL("clock_gettime");
     }
 
-    spinfo_update0(ctx);
-    _spinfo_update1(ctx);
-    _spinfo_update2(ctx);
+    mnspinfo_update0(ctx);
+    _mnspinfo_update1(ctx);
+    _mnspinfo_update2(ctx);
 
     ctx->flags = flags;
     ctx->proc.pid = pid;
     if ((ctx->ps = procstat_open_sysctl()) == NULL) {
         FAIL("procstat_open_sysctl");
     }
-    _spinfo_update3(ctx);
+    _mnspinfo_update3(ctx);
 }
 
 void
-spinfo_fini(spinfo_ctx_t *ctx)
+mnspinfo_fini(mnspinfo_ctx_t *ctx)
 {
     if (ctx->ps != NULL) {
         if (ctx->procs != NULL) {
