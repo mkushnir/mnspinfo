@@ -13,9 +13,11 @@
  */
 
 
-void
+int
 mnspinfo_update0(mnspinfo_ctx_t *ctx)
 {
+    int res = 0;
+
     /*
      * /proc/meminfo
      * /proc/cpuinfo
@@ -24,12 +26,17 @@ mnspinfo_update0(mnspinfo_ctx_t *ctx)
     //TRACE("statclock=%ld", ctx->sys.statclock);
     ctx->sys.pagesize = sysconf(_SC_PAGESIZE);
 
-    if (parse_cpuinfo(ctx) != 0) {
-        FAIL("parse_cpuinfo");
+    if ((res = parse_cpuinfo(ctx)) != 0) {
+        goto end;
+        //FAIL("parse_cpuinfo");
     }
-    if (parse_meminfo(ctx) != 0) {
-        FAIL("parse_meminfo");
+    if ((res = parse_meminfo(ctx)) != 0) {
+        goto end;
+        //FAIL("parse_meminfo");
     }
+
+end:
+    return res;
 }
 
 
@@ -54,36 +61,47 @@ mnspinfo_update1(UNUSED mnspinfo_ctx_t *ctx)
 }
 
 
-void
+int
 mnspinfo_update3(UNUSED mnspinfo_ctx_t *ctx)
 {
+    int res = 0;
+
     /*
      * /proc/PID/stat
      * /proc/PID/statm
      * /proc/PID/fdinfo/
      * /proc/PID/fd/
      */
-    if (parse_proc_pid_statm(ctx) != 0) {
-        FAIL("parse_proc_pid_statm");
+    if ((res = parse_proc_pid_statm(ctx)) != 0) {
+        goto end;
+        //FAIL("parse_proc_pid_statm");
     }
-    if (parse_proc_pid_fdinfo(ctx) != 0) {
-        FAIL("parse_proc_pid_fdinfo");
+    if ((res = parse_proc_pid_fdinfo(ctx)) != 0) {
+        goto end;
+        //FAIL("parse_proc_pid_fdinfo");
     }
-    if (parse_proc_pid_fd(ctx) != 0) {
-        FAIL("parse_proc_pid_fd");
+    if ((res = parse_proc_pid_fd(ctx)) != 0) {
+        goto end;
+        //FAIL("parse_proc_pid_fd");
     }
+
+end:
+    return res;
 }
 
 
-void
+int
 mnspinfo_update4(UNUSED mnspinfo_ctx_t *ctx)
 {
+    return 0;
 }
 
 
-void
+int
 mnspinfo_init(mnspinfo_ctx_t *ctx, pid_t pid, unsigned flags)
 {
+    int res = 0;
+
     //memset(ctx, 0, sizeof(mnspinfo_ctx_t));
 
     ctx->ts0.tv_sec = 0;
@@ -93,14 +111,18 @@ mnspinfo_init(mnspinfo_ctx_t *ctx, pid_t pid, unsigned flags)
         FAIL("clock_gettime");
     }
 
-    mnspinfo_update0(ctx);
+    if ((res = mnspinfo_update0(ctx)) != 0) {
+        goto end;
+    }
     _mnspinfo_update1(ctx);
     _mnspinfo_update2(ctx);
 
     ctx->flags = flags;
     ctx->proc.pid = pid;
-    mnspinfo_update3(ctx);
+    res = mnspinfo_update3(ctx);
 
+end:
+    return res;
 }
 
 

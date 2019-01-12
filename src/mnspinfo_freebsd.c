@@ -20,11 +20,15 @@
 static int
 testfiles(mnspinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
 {
+    int res = 0;
+
     struct filestat_list *files;
     struct filestat *fs;
 
     if ((files = procstat_getfiles(ctx->ps, proc, 1)) == NULL) {
-        FAIL("procstat_getfiles");
+        res = -1;
+        goto end;
+        //FAIL("procstat_getfiles");
     }
 
     STAILQ_FOREACH(fs, files, next) {
@@ -66,18 +70,23 @@ testfiles(mnspinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
     //      ctx->proc.rss,
     //      proc->ki_rssize * 4096 - ctx->proc.rss,
     //      proc->ki_pctcpu);
-    return 0;
+
+end:
+    return res;
 }
 
 
 UNUSED static int
 testkstack(mnspinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
 {
+    int res = 0;
     unsigned int i, sz;
     struct kinfo_kstack *kstack;
 
     if ((kstack = procstat_getkstack(ctx->ps, proc, &sz)) == NULL) {
-        FAIL("procstat_getkstack");
+        res = -1;
+        goto end;
+        //FAIL("procstat_getkstack");
     }
 
     for (i = 0; i < sz; ++i) {
@@ -90,19 +99,23 @@ testkstack(mnspinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
         //      k->kkst_trace);
     }
     procstat_freekstack(ctx->ps, kstack);
-    return 0;
+end:
+    return res;
 }
 
 
 static int
 testvmmap(mnspinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
 {
+    int res = 0;
     unsigned int i, sz;
     uint64_t vsz_total, res_total;
     struct kinfo_vmentry *vmmap;
 
     if ((vmmap = procstat_getvmmap(ctx->ps, proc, &sz)) == NULL) {
-        FAIL("procstat_getvmmap");
+        res = -1;
+        goto end;
+        //FAIL("procstat_getvmmap");
     }
 
     vsz_total = 0;
@@ -145,7 +158,9 @@ testvmmap(mnspinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
     ctx->proc.vsz = vsz_total;
     ctx->proc.rss = res_total * ctx->sys.pagesize;
     procstat_freevmmap(ctx->ps, vmmap);
-    return 0;
+
+end:
+    return res;
 }
 
 
@@ -162,7 +177,7 @@ traverse_procs(mnspinfo_ctx_t *ctx, mnspinfo_proc_cb_t cb, void *udata)
     return 0;
 }
 
-void
+int
 mnspinfo_update0(mnspinfo_ctx_t *ctx)
 {
     size_t sz;
@@ -205,6 +220,7 @@ mnspinfo_update0(mnspinfo_ctx_t *ctx)
     if (sysctlbyname("hw.ncpu", &ctx->sys.ncpu, &sz, NULL, 0) != 0) {
         FAIL("sysctlbyname hw.ncpu");
     }
+    return 0;
 }
 
 #define CPUSTATE_STR(s)        \
@@ -231,15 +247,16 @@ _mnspinfo_update1(mnspinfo_ctx_t *ctx)
      *  vm.stats.vm.v_page_count
      *  vm.stats.vm.v_page_size
      */
-#define SPIU1_VM(n)                            \
-    sz = sizeof(ctx->n);                       \
-    if (sysctlbyname("vm.stats.vm." #n,        \
-                     &ctx->n,                  \
-                     &sz,                      \
-                     NULL,                     \
-                     0) != 0) {                \
-        FAIL("sysctlbyname vm.stats.vm." #n);  \
-    }                                          \
+#define SPIU1_VM(n)                                                    \
+    sz = sizeof(ctx->n);                                               \
+    if (sysctlbyname("vm.stats.vm." #n,                                \
+                     &ctx->n,                                          \
+                     &sz,                                              \
+                     NULL,                                             \
+                     0) != 0) {                                        \
+        ctx->n = 0;                                                    \
+        /* TRACE("no such sysctl: %s, ignoring", "vm.stats.vm." #n); */\
+    }                                                                  \
 
 
     SPIU1_VM(v_cache_count)
@@ -299,7 +316,7 @@ _mnspinfo_update1(mnspinfo_ctx_t *ctx)
 }
 
 
-void
+int
 mnspinfo_update1(mnspinfo_ctx_t *ctx)
 {
     int i;
@@ -333,12 +350,14 @@ mnspinfo_update1(mnspinfo_ctx_t *ctx)
                                ctx->cp_time1[CP_INTR]) /
         (double)ctx->elapsed * 100.0;
     //TRACE("%%CPU=%lf", ctx->sys.cpupct);
+    return 0;
 }
 
 
-static void
+static int
 _mnspinfo_update3(mnspinfo_ctx_t *ctx)
 {
+    int res = 0;
     int op;
 
     op = KERN_PROC_PID;
@@ -351,42 +370,57 @@ _mnspinfo_update3(mnspinfo_ctx_t *ctx)
                                         op,
                                         (int)ctx->proc.pid,
                                         &ctx->procsz)) == NULL) {
-        FAIL("procstat_getprocs");
+        res = -1;
+        goto end;
+        //FAIL("procstat_getprocs");
     }
     ctx->proc.vsz = 0;
     ctx->proc.rss = 0;
-    if (traverse_procs(ctx, testvmmap, NULL) != 0) {
-        FAIL("traverse_procs");
+    if ((res = traverse_procs(ctx, testvmmap, NULL)) != 0) {
+        goto end;
+        //FAIL("traverse_procs");
     }
     ctx->proc.nfiles = 0;
     ctx->proc.nvnodes = 0;
     ctx->proc.nsockets = 0;
-    if (traverse_procs(ctx, testfiles, NULL) != 0) {
-        FAIL("traverse_procs");
+    if ((res = traverse_procs(ctx, testfiles, NULL)) != 0) {
+        goto end;
+        //FAIL("traverse_procs");
     }
+
+end:
+    return res;
 }
 
 
-void
+int
 mnspinfo_update3(mnspinfo_ctx_t *ctx)
 {
+    int res = 0;
     mnspinfo_fini(ctx);
     if ((ctx->ps = procstat_open_sysctl()) == NULL) {
-        FAIL("procstat_open_sysctl");
+        res = -1;
+        goto end;
+        //FAIL("procstat_open_sysctl");
     }
-    _mnspinfo_update3(ctx);
+    res = _mnspinfo_update3(ctx);
+
+end:
+    return res;
 }
 
 
-void
+int
 mnspinfo_update4(UNUSED mnspinfo_ctx_t *ctx)
 {
+    return 0;
 }
 
 
-void
+int
 mnspinfo_init(mnspinfo_ctx_t *ctx, pid_t pid, unsigned flags)
 {
+    int res = 0;
     ctx->ts0.tv_sec = 0;
     ctx->ts0.tv_nsec = 0;
 
@@ -394,7 +428,9 @@ mnspinfo_init(mnspinfo_ctx_t *ctx, pid_t pid, unsigned flags)
         FAIL("clock_gettime");
     }
 
-    mnspinfo_update0(ctx);
+    if ((res = mnspinfo_update0(ctx)) != 0) {
+        goto end;
+    }
     _mnspinfo_update1(ctx);
     _mnspinfo_update2(ctx);
 
@@ -403,8 +439,12 @@ mnspinfo_init(mnspinfo_ctx_t *ctx, pid_t pid, unsigned flags)
     if ((ctx->ps = procstat_open_sysctl()) == NULL) {
         FAIL("procstat_open_sysctl");
     }
-    _mnspinfo_update3(ctx);
+    res = _mnspinfo_update3(ctx);
+
+end:
+    return res;
 }
+
 
 void
 mnspinfo_fini(mnspinfo_ctx_t *ctx)
@@ -418,4 +458,3 @@ mnspinfo_fini(mnspinfo_ctx_t *ctx)
         ctx->ps = NULL;
     }
 }
-

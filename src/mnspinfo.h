@@ -58,7 +58,7 @@ typedef struct _mnspinfo_ctx {
 #define MNSPINFO_SELF 1
 #define MNSPINFO_TREE 2
 mnspinfo_ctx_t *mnspinfo_new(pid_t, unsigned);
-void mnspinfo_reinit(mnspinfo_ctx_t *, pid_t, unsigned);
+int mnspinfo_reinit(mnspinfo_ctx_t *, pid_t, unsigned);
 
 #define MNSPINFO_U0 0x01 /* system constants */
 #define MNSPINFO_U1 0x02 /* system cpu and memory usage */
@@ -66,7 +66,7 @@ void mnspinfo_reinit(mnspinfo_ctx_t *, pid_t, unsigned);
 #define MNSPINFO_U3 0x08 /* process files and memory */
 #define MNSPINFO_U4 0x10 /* process limits */
 #define MNSPINFO_UZ 0xffffffff
-void mnspinfo_update(mnspinfo_ctx_t *, unsigned);
+int mnspinfo_update(mnspinfo_ctx_t *, unsigned);
 
 void mnspinfo_destroy(mnspinfo_ctx_t **);
 

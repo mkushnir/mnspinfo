@@ -14,24 +14,34 @@ mnspinfo_new(pid_t pid, unsigned flags)
     mnspinfo_ctx_t *ctx;
 
     if ((ctx = malloc(sizeof(mnspinfo_ctx_t))) == NULL) {
-        FAIL("malloc");
+        goto end;
     }
-    mnspinfo_init(ctx, pid, flags);
+    if (mnspinfo_init(ctx, pid, flags) != 0) {
+        goto err;
+    }
+
+end:
     return ctx;
+
+err:
+    free(ctx);
+    ctx = NULL;
+    goto end;
 }
 
 
-void
+int
 mnspinfo_reinit(mnspinfo_ctx_t *ctx, pid_t pid, unsigned flags)
 {
     mnspinfo_fini(ctx);
-    mnspinfo_init(ctx, pid, flags);
+    return mnspinfo_init(ctx, pid, flags);
 }
 
 
-void
+int
 mnspinfo_update(mnspinfo_ctx_t *ctx, unsigned what)
 {
+    int res = 0;
     if (clock_gettime(CLOCK_MONOTONIC, &ctx->ts1) != 0) {
         FAIL("clock_gettime");
     }
@@ -39,18 +49,29 @@ mnspinfo_update(mnspinfo_ctx_t *ctx, unsigned what)
                      TIMESPEC_TO_NSEC(ctx->ts0))) / 1000000;
 
     if (what & MNSPINFO_U0) {
-        mnspinfo_update0(ctx);
+        if ((res = mnspinfo_update0(ctx)) != 0) {
+            goto end;
+        }
     }
     if (what & MNSPINFO_U1) {
-        mnspinfo_update1(ctx);
+        if ((res = mnspinfo_update1(ctx)) != 0) {
+            goto end;
+        }
     }
     if (what & MNSPINFO_U2) {
-        mnspinfo_update2(ctx);
+        if ((res = mnspinfo_update2(ctx)) != 0) {
+            goto end;
+        }
     }
     if (what & MNSPINFO_U3) {
-        mnspinfo_update3(ctx);
+        if ((res = mnspinfo_update3(ctx)) != 0) {
+            goto end;
+        }
     }
     ctx->ts0 = ctx->ts1;
+
+end:
+    return res;
 }
 
 

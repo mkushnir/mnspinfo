@@ -23,7 +23,7 @@ _mnspinfo_update2(mnspinfo_ctx_t *ctx)
 }
 
 
-void
+int
 mnspinfo_update2(mnspinfo_ctx_t *ctx)
 {
     double ticks;
@@ -53,6 +53,7 @@ mnspinfo_update2(mnspinfo_ctx_t *ctx)
     //TRACE("%%PCPU=%lf IRSS=%lf", ctx->proc.cpupct, irss);
 
     ctx->proc.ru = ru;
+    return 0;
 }
 
 
