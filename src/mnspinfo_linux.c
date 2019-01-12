@@ -57,17 +57,15 @@ _mnspinfo_update1(UNUSED mnspinfo_ctx_t *ctx)
 }
 
 
-void
-mnspinfo_update1(UNUSED mnspinfo_ctx_t *ctx)
+int
+mnspinfo_update1(mnspinfo_ctx_t *ctx)
 {
-    if (parse_proc_stat_update(ctx) != 0) {
-        FAIL("parse_proc_stat_update");
-    }
+    return parse_proc_stat_update(ctx);
 }
 
 
 int
-mnspinfo_update3(UNUSED mnspinfo_ctx_t *ctx)
+mnspinfo_update3(mnspinfo_ctx_t *ctx)
 {
     int res = 0;
 
