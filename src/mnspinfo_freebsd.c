@@ -424,7 +424,7 @@ mnspinfo_init(mnspinfo_ctx_t *ctx, pid_t pid, unsigned flags)
     ctx->ts0.tv_sec = 0;
     ctx->ts0.tv_nsec = 0;
 
-    if (clock_gettime(CLOCK_UPTIME_FAST, &ctx->ts1) != 0) {
+    if (clock_gettime(CLOCK_REALTIME_FAST, &ctx->ts1) != 0) {
         FAIL("clock_gettime");
     }
 

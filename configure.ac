@@ -91,6 +91,18 @@ AC_TYPE_SIZE_T
 AC_TYPE_SSIZE_T
 AC_TYPE_UINT64_T
 
+AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
+#include <time.h>
+#ifndef CLOCK_REALTIME_FAST
+#error CLOCK_REALTIME_FAST is not defined
+#endif
+]])],
+    [AC_DEFINE(
+        [HAVE_CLOCK_REALTIME_FAST],
+        [],
+        [Define if CLOCK_REALTIME_FAST is defined])],
+    [])
+
 AC_CHECK_LIB(procstat, procstat_close)
 AC_CHECK_LIB(kvm, kvm_close)
 

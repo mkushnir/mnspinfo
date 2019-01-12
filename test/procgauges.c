@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <stdint.h> //intmax_t
+#include <inttypes.h> //PRId
 
 #include <mrkcommon/array.h>
 #include <mrkcommon/hash.h>
@@ -16,28 +18,15 @@
 #include <mrkcommon/traversedir.h>
 
 #include <mncommand.h>
-#include <mnspinfo.h>
+#include "procgauges.h"
 
 #include "config.h"
 #include "diag.h"
 
 
-typedef struct _mnprocgauges_ctx {
-    mnspinfo_ctx_t *ctx;
-} mnprocgauges_ctx_t;
-
-
-struct _resolve_names_params {
-    pid_t mypid;
-    /* mnprocgauges_ctx_t */
-    mnarray_t ctxes;
-    //mnhash_t ctxes;
-    /* mnbytes_t * */
-    mnarray_t names;
-    bool error;
-};
-
-
+/*
+ * command line
+ */
 static int
 cmd_help(mncommand_ctx_t *ctx,
          UNUSED mncommand_cmd_t *cmd,
@@ -66,6 +55,85 @@ cmd_version(UNUSED mncommand_ctx_t *ctx,
 }
 
 
+/*
+ * mnprocgauges_ctx_t
+ */
+
+static mnprocgauges_ctx_t *
+mnprocgauges_ctx_new(pid_t pid, mnbytes_t *suffix)
+{
+    mnprocgauges_ctx_t *res;
+    char buf[MAXNAMLEN + 1];
+
+    if (MRKUNLIKELY((res = malloc(sizeof(mnprocgauges_ctx_t))) == NULL)) {
+        FAIL("malloc");
+    }
+
+    if ((res->spi = mnspinfo_new(pid, MNSPINFO_SELF)) == NULL) {
+        goto err;
+    }
+
+    res->pid = pid;
+
+    if (suffix != NULL) {
+        (void)snprintf(buf, sizeof(buf), "procgauges-%s-%d", BDATA(suffix), pid);
+    } else {
+        (void)snprintf(buf, sizeof(buf), "procgauges-%d", pid);
+    }
+
+    if ((res->fd = open(buf, O_WRONLY|O_APPEND|O_CREAT, 0644)) < 0) {
+        goto err;
+    }
+
+end:
+    return res;
+
+err:
+    free(res);
+    res = NULL;
+    goto end;
+}
+
+
+static void
+mnprocgauges_ctx_destroy(mnprocgauges_ctx_t **ctx)
+{
+    if (*ctx != NULL) {
+        mnspinfo_destroy(&(*ctx)->spi);
+        if ((*ctx)->fd != -1) {
+            close((*ctx)->fd);
+        }
+        free(*ctx);
+        *ctx = NULL;
+    }
+}
+
+
+static int
+mnprocgauges_ctx_hash_item_fini(mnprocgauges_ctx_t *key, UNUSED void *value)
+{
+    mnprocgauges_ctx_destroy(&key);
+    return 0;
+}
+
+
+static uint64_t
+mnprocgauges_ctx_hash(mnprocgauges_ctx_t *ctx)
+{
+    return (uint64_t)ctx->pid;
+}
+
+
+static int
+mnprocgauges_ctx_cmp(mnprocgauges_ctx_t *a, mnprocgauges_ctx_t *b)
+{
+    return MNCMP(a->pid, b->pid);
+}
+
+
+/*
+ *
+ */
 static int
 names_fini_item(mnbytes_t **s)
 {
@@ -75,46 +143,68 @@ names_fini_item(mnbytes_t **s)
 
 
 static int
-resolve_name_cb(mnbytes_t **s, const char *p0)
+resolve_name_cb(mnbytes_t **s, void *udata)
 {
-    return strstr(p0, (char *)BDATA(*s)) != NULL;
-}
-
-
-static int
-mnprocgauges_ctx_fini_item(mnprocgauges_ctx_t *ctx)
-{
-    mnspinfo_destroy(&ctx->ctx);
-    return 0;
+    struct {
+        void *p0;
+        void *p1;
+        ssize_t sz;
+        mnbytes_t *hit;
+    } *match = udata;
+    int res = strstr(match->p0, (char *)BDATA(*s)) != NULL;
+    if (res) {
+        match->hit = *s;
+    }
+    return res;
 }
 
 
 static void
-resolve_name(mnbytes_t *cmdline, pid_t pid, struct _resolve_names_params *params)
+resolve_name(mnbytes_t *cmdline, pid_t pid, resolve_names_params_t *params)
 {
-    void *p0, *p1;
-    ssize_t sz = BSZ(cmdline);
+    struct {
+        void *p0;
+        void *p1;
+        ssize_t sz;
+        mnbytes_t *hit;
+    } match;
+    mnprocgauges_ctx_t probe;
 
-    for (p0 = BDATA(cmdline), p1 = memchr(p0, 0, sz); sz > 0 && p1 != NULL;) {
-        if (p0 == p1) {
+    probe.pid = pid;
+    match.hit = NULL;
+    for (match.p0 = BDATA(cmdline),
+            match.p1 = memchr(match.p0, 0, match.sz);
+         match.sz > 0 && match.p1 != NULL;) {
+        if (match.p0 == match.p1) {
             break;
         }
         //TRACE("a=%s", (char *)p0);
-        if (array_traverse(&params->names, (array_traverser_t)resolve_name_cb, p0) != 0) {
-            mnprocgauges_ctx_t *ctx;
-            if ((ctx = array_incr(&params->ctxes)) == NULL) {
-                FAIL("array_incr");
+        if (array_traverse(&params->names,
+                           (array_traverser_t)resolve_name_cb,
+                           &match) != 0) {
+            mnhash_item_t *hit;
+
+            assert(match.hit != NULL);
+            if ((hit = hash_get_item(&params->ctxes, &probe)) == NULL) {
+                mnprocgauges_ctx_t *ctx;
+
+                if ((ctx = mnprocgauges_ctx_new(probe.pid, match.hit)) == NULL) {
+                    TRACE("mnprocgauges_ctx_new failed for pid %d, ignoring",
+                            pid);
+                }
+                hash_set_add(&params->ctxes, ctx);
+
+            } else {
+                TRACE("duplicate pid %d for %s", pid, BDATA(cmdline));
             }
-            if ((ctx->ctx = mnspinfo_new(pid, MNSPINFO_SELF)) == NULL) {
-                TRACE("mnspinfo_new failed for pid %d", pid);
-                (void)array_decr_fast(&params->ctxes);
-            }
-            //TRACE("added pid %d for %s", pid, p0);
+            /*
+             * matched, done
+             */
             break;
         }
-        sz -= p1 - p0 + 1;
-        p0 = p1 + 1;
-        p1 = memchr(p0, 0, sz);
+        match.sz -= match.p1 - match.p0 + 1;
+        match.p0 = match.p1 + 1;
+        match.p1 = memchr(match.p0, 0, match.sz);
     }
 }
 
@@ -123,7 +213,7 @@ resolve_name(mnbytes_t *cmdline, pid_t pid, struct _resolve_names_params *params
 static int
 resolve_names_cb(const char *d, struct dirent *de, void *udata)
 {
-    struct _resolve_names_params *params = udata;
+    resolve_names_params_t *params = udata;
 
     //TRACE("d=%s de=%p", d, de);
     if (de != NULL) {
@@ -148,12 +238,14 @@ resolve_names_cb(const char *d, struct dirent *de, void *udata)
                     cmdline = bytes_new(RESOLVE_NAMES_CMDLINESZ);
                     BYTES_INCREF(cmdline);
                     bytes_memset(cmdline, 0);
+
                     if (read(fd, BDATA(cmdline), BSZ(cmdline)) >= 0) {
                         resolve_name(cmdline, pid, params);
                     } else {
                         //TRACE("cannot read %d", fd);
                     }
                     BYTES_DECREF(&cmdline);
+
                 } else {
                     //TRACE("cannot fstat %s", buf);
                 }
@@ -172,7 +264,7 @@ end:
 
 
 static int
-resolve_names(struct _resolve_names_params *params)
+resolve_names(resolve_names_params_t *params)
 {
     int res;
 
@@ -182,42 +274,58 @@ resolve_names(struct _resolve_names_params *params)
 
 
 static int
-update_ctxes_cb(mnprocgauges_ctx_t *ctx, void *udata)
+update_ctxes_cb(UNUSED mnhash_t *hash, mnhash_item_t *hit, void *udata)
 {
-    UNUSED struct _resolve_names_params *params = udata;
-    TRACE("pid=%d", ctx->ctx->proc.pid);
+    mnprocgauges_ctx_t *ctx = hit->key;
+    UNUSED resolve_names_params_t *params = udata;
+
+    TRACE("pid=%d", ctx->spi->proc.pid);
     return 0;
 }
 
 
 static void
-update_ctxes(struct _resolve_names_params *params)
+update_ctxes(resolve_names_params_t *params)
 {
     int res;
 
     res = resolve_names(params);
     TRACE("res=%d", res);
-    (void)array_traverse(
-            &params->ctxes, (array_traverser_t)update_ctxes_cb, params);
+    (void)hash_traverse_item(
+            &params->ctxes, (hash_traverser_item_t)update_ctxes_cb, params);
     params->error = false;
 }
 
 
 static int
-run_ctxes_cb(mnprocgauges_ctx_t *ctx, void *udata)
+run_ctxes_cb(UNUSED mnhash_t *hash, mnhash_item_t *hit, void *udata)
 {
-    UNUSED struct _resolve_names_params *params = udata;
-    TRACE("pid=%d", ctx->ctx->proc.pid);
+    UNUSED mnprocgauges_ctx_t *ctx = hit->key;
+    UNUSED resolve_names_params_t *params = udata;
+
+    assert(ctx->pid > 0);
+    assert(ctx->fd >= 0);
+
+    if (mnspinfo_update(ctx->spi, MNSPINFO_U3) != 0) {
+        TRACE("mnspinfo_update failed");
+    } else {
+        TRACE("%jd %lf %"PRIu64" %"PRIu64" %"PRIu64,
+              (intmax_t)ctx->spi->ts1.tv_sec,
+              ctx->spi->proc.cpupct,
+              ctx->spi->proc.rss,
+              ctx->spi->proc.nfiles,
+              ctx->spi->proc.nsockets);
+    }
     return 0;
 }
 
 
 static void
-run_ctxes(struct _resolve_names_params *params)
+run_ctxes(resolve_names_params_t *params)
 {
-    (void)array_traverse(
-            &params->ctxes, (array_traverser_t)run_ctxes_cb, params);
-    if (params->ctxes.elnum == 0) {
+    (void)hash_traverse_item(
+            &params->ctxes, (hash_traverser_item_t)run_ctxes_cb, params);
+    if (hash_get_elnum(&params->ctxes) == 0) {
         params->error = true;
     }
 }
@@ -229,7 +337,7 @@ main(int argc, char *argv[static argc])
     int i;
     int optind;
     mncommand_ctx_t cmdctx;
-    struct _resolve_names_params params;
+    resolve_names_params_t params;
 
     BYTES_ALLOCA(_help, "help");
     BYTES_ALLOCA(_help_description, "Print this message and exit");
@@ -253,13 +361,11 @@ main(int argc, char *argv[static argc])
     argv += optind;
 
     /* params */
-    if (array_init(&params.ctxes,
-                   sizeof(mnprocgauges_ctx_t),
-                   0,
-                   NULL,
-                   (array_finalizer_t)mnprocgauges_ctx_fini_item) != 0) {
-        FAIL("array_init");
-    }
+    hash_init(&params.ctxes, 31,
+              (hash_hashfn_t)mnprocgauges_ctx_hash,
+              (hash_item_comparator_t)mnprocgauges_ctx_cmp,
+              (hash_item_finalizer_t)mnprocgauges_ctx_hash_item_fini);
+
     if (array_init(&params.names,
                    sizeof(mnbytes_t *),
                    0,
@@ -270,17 +376,24 @@ main(int argc, char *argv[static argc])
     params.mypid = getpid();
 
     for (i = 0; i < argc; ++i) {
-        pid_t pid;
+        mnprocgauges_ctx_t probe;
 
-        if ((pid = strtol(argv[i], NULL, 10)) > 0) {
-            mnprocgauges_ctx_t *ctx;
+        if ((probe.pid = strtol(argv[i], NULL, 10)) > 0) {
+            mnhash_item_t *hit;
 
-            if ((ctx = array_incr(&params.ctxes)) == NULL) {
-                FAIL("array_incr");
-            }
-            if ((ctx->ctx = mnspinfo_new(pid, MNSPINFO_SELF)) == NULL) {
-                TRACE("mnspinfo_new failed for pid %d", pid);
-                (void)array_decr_fast(&params.ctxes);
+            if ((hit = hash_get_item(&params.ctxes, &probe)) == NULL) {
+                mnprocgauges_ctx_t *ctx;
+
+                if ((ctx = mnprocgauges_ctx_new(probe.pid, NULL)) == NULL) {
+                    TRACE("mnprocgauges_ctx_new failed for pid %d, ignoring",
+                            probe.pid);
+                    continue;
+                }
+                hash_set_add(&params.ctxes, ctx);
+
+            } else {
+                TRACE("duplicate pid %d, ignoring", probe.pid);
+                continue;
             }
 
         } else {
@@ -306,7 +419,7 @@ main(int argc, char *argv[static argc])
         }
     }
 
-    (void)array_fini(&params.ctxes);
+    hash_fini(&params.ctxes);
     (void)array_fini(&params.names);
     (void)mncommand_ctx_fini(&cmdctx);
 

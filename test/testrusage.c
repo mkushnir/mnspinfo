@@ -11,7 +11,6 @@
 #include <mrkcommon/util.h>
 
 #include "diag.h"
-#include "unittest.h"
 
 static void
 bar(void)

@@ -8,6 +8,11 @@
 
 #include "diag.h"
 
+#include "config.h"
+#ifndef HAVE_CLOCK_REALTIME_FAST
+#   define CLOCK_REALTIME_FAST CLOCK_REALTIME
+#endif
+
 mnspinfo_ctx_t *
 mnspinfo_new(pid_t pid, unsigned flags)
 {
@@ -42,7 +47,7 @@ int
 mnspinfo_update(mnspinfo_ctx_t *ctx, unsigned what)
 {
     int res = 0;
-    if (clock_gettime(CLOCK_MONOTONIC, &ctx->ts1) != 0) {
+    if (clock_gettime(CLOCK_REALTIME_FAST, &ctx->ts1) != 0) {
         FAIL("clock_gettime");
     }
     ctx->elapsed = ((TIMESPEC_TO_NSEC(ctx->ts1) -

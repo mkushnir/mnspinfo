@@ -7,9 +7,9 @@
 
 #include <mrkcommon/dumpm.h>
 #include <mrkcommon/util.h>
+#include <mrkcommon/unittest.h>
 
 #include "diag.h"
-#include "unittest.h"
 
 #include <mnspinfo.h>
 

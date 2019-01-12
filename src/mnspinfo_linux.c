@@ -8,6 +8,11 @@
 #include "mnspinfo_private.h"
 #include "diag.h"
 
+#include "config.h"
+#ifndef HAVE_CLOCK_REALTIME_FAST
+#   define CLOCK_REALTIME_FAST CLOCK_REALTIME
+#endif
+
 /*
  * /proc utils
  */
@@ -107,7 +112,7 @@ mnspinfo_init(mnspinfo_ctx_t *ctx, pid_t pid, unsigned flags)
     ctx->ts0.tv_sec = 0;
     ctx->ts0.tv_nsec = 0;
 
-    if (clock_gettime(CLOCK_MONOTONIC, &ctx->ts1) != 0) {
+    if (clock_gettime(CLOCK_REALTIME_FAST, &ctx->ts1) != 0) {
         FAIL("clock_gettime");
     }
 

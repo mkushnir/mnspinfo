@@ -9,7 +9,7 @@ noinst_PROGRAMS=testfoo testrusage
 diags = ../src/diag.txt
 BUILT_SOURCES = diag.c diag.h
 
-noinst_HEADERS = ../src/mnspinfo.h unittest.h
+noinst_HEADERS = procgauges.h
 
 
 if FREEBSD
