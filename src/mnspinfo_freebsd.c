@@ -71,6 +71,11 @@ testfiles(mnspinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
     //      proc->ki_rssize * 4096 - ctx->proc.rss,
     //      proc->ki_pctcpu);
 
+    //TRACE("proc=%p", proc);
+    //TRACE("ki_fd=%p", proc->ki_fd);
+    //TRACE("fd_files=%p", proc->ki_fd->fd_files);
+    //TRACE("fdt_nfiles=%d", proc->ki_fd->fd_files->fdt_nfiles);
+
 end:
     return res;
 }
@@ -104,7 +109,7 @@ end:
 }
 
 
-static int
+UNUSED static int
 testvmmap(mnspinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
 {
     int res = 0;
@@ -312,7 +317,6 @@ _mnspinfo_update1(mnspinfo_ctx_t *ctx)
         FAIL("sysctlbyname kern.cp_time");
     }
     ctx->sys.cpupct = 0.;
-
 }
 
 
@@ -359,12 +363,32 @@ _mnspinfo_update3(mnspinfo_ctx_t *ctx)
 {
     int res = 0;
 
-    ctx->proc.vsz = 0;
-    ctx->proc.rss = 0;
-    if ((res = traverse_procs(ctx, testvmmap, NULL)) != 0) {
-        goto end;
-        //FAIL("traverse_procs");
+    ctx->ru1 = ctx->procs->ki_rusage;
+
+    if (ctx->elapsed) {
+        double udiff, sdiff;
+        udiff = (double)(TIMEVAL_TO_USEC(ctx->ru1.ru_utime) -
+                         TIMEVAL_TO_USEC(ctx->ru0.ru_utime)) / 1000.0;
+        sdiff = (double)(TIMEVAL_TO_USEC(ctx->ru1.ru_stime) -
+                         TIMEVAL_TO_USEC(ctx->ru0.ru_stime)) / 1000.0;
+        ctx->proc.cpupct = (udiff + sdiff) / (double)ctx->elapsed * 100.0;
+
+    } else {
+        ctx->proc.cpupct = 0.0;
     }
+
+    ctx->ru0 = ctx->ru1;
+
+    //ctx->proc.vsz = 0;
+    //ctx->proc.rss = 0;
+    //if ((res = traverse_procs(ctx, testvmmap, NULL)) != 0) {
+    //    goto end;
+    //    //FAIL("traverse_procs");
+    //}
+
+    ctx->proc.vsz = ctx->procs->ki_size;
+    ctx->proc.rss = ctx->procs->ki_rssize * ctx->v_page_size;
+
     ctx->proc.nfiles = 0;
     ctx->proc.nvnodes = 0;
     ctx->proc.nsockets = 0;
@@ -392,27 +416,13 @@ mnspinfo_update3(mnspinfo_ctx_t *ctx)
         goto end;
     }
 
-    ctx->ru1 = ctx->procs->ki_rusage;
-
-    if (ctx->elapsed) {
-        double udiff, sdiff;
-        udiff = (double)(TIMEVAL_TO_USEC(ctx->ru1.ru_utime) -
-                         TIMEVAL_TO_USEC(ctx->ru0.ru_utime)) / 1000.0;
-        sdiff = (double)(TIMEVAL_TO_USEC(ctx->ru1.ru_stime) -
-                         TIMEVAL_TO_USEC(ctx->ru0.ru_stime)) / 1000.0;
-        ctx->proc.cpupct = (udiff + sdiff) / (double)ctx->elapsed * 100.0;
-
-    } else {
-        ctx->proc.cpupct = 0.0;
-    }
-
-    ctx->ru0 = ctx->ru1;
-
     res = _mnspinfo_update3(ctx);
+
+    procstat_freeprocs(ctx->ps, ctx->procs);
+    ctx->procs = NULL;
 
 end:
     return res;
-
 }
 
 
@@ -456,22 +466,7 @@ mnspinfo_init(mnspinfo_ctx_t *ctx, pid_t pid, unsigned flags)
         FAIL("procstat_open_sysctl");
     }
 
-    /*
-     *
-     */
-    ctx->procsz = 0;
-    if ((ctx->procs = procstat_getprocs(ctx->ps,
-                                        KERN_PROC_PID,
-                                        (int)ctx->proc.pid,
-                                        &ctx->procsz)) == NULL) {
-        res = -1;
-        goto end;
-    }
-    ctx->ru0 = ctx->procs->ki_rusage;
-    ctx->ru1 = ctx->procs->ki_rusage;
-    ctx->proc.cpupct = 0.0;
-
-    res = _mnspinfo_update3(ctx);
+    res = mnspinfo_update3(ctx);
 
 end:
     return res;

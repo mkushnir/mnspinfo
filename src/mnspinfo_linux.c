@@ -120,6 +120,7 @@ mnspinfo_init(mnspinfo_ctx_t *ctx, pid_t pid, unsigned flags)
 
     ctx->ts0.tv_sec = 0;
     ctx->ts0.tv_nsec = 0;
+
     memset(&ctx->ru0, 0, sizeof(struct rusage));
     memset(&ctx->ru1, 0, sizeof(struct rusage));
 
