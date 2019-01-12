@@ -55,6 +55,21 @@ cmd_version(UNUSED mncommand_ctx_t *ctx,
 }
 
 
+static int
+cmd_interval(UNUSED mncommand_ctx_t *ctx,
+             UNUSED mncommand_cmd_t *cmd,
+             UNUSED const char *optarg,
+             void *udata)
+{
+    resolve_names_params_t *params = udata;
+    if ((params->interval = strtol(optarg, NULL, 10)) <= 0) {
+        TRACE("invalid interval: %d, forcing default", params->interval);
+        params->interval = PROCGAUGES_DEFAULT_INTERVAL;
+    }
+    return 0;
+}
+
+
 /*
  * mnprocgauges_ctx_t
  */
@@ -368,12 +383,17 @@ main(int argc, char *argv[static argc])
     int i;
     int optind;
     mncommand_ctx_t cmdctx;
-    resolve_names_params_t params;
+    resolve_names_params_t params = {
+        .interval = PROCGAUGES_DEFAULT_INTERVAL,
+        .error = false,
+    };
 
     BYTES_ALLOCA(_help, "help");
-    BYTES_ALLOCA(_help_description, "Print this message and exit");
+    BYTES_ALLOCA(_help_description, "Print this message and exit.");
     BYTES_ALLOCA(_version, "version");
-    BYTES_ALLOCA(_version_description, "Print version and exit");
+    BYTES_ALLOCA(_version_description, "Print version and exit.");
+    BYTES_ALLOCA(_interval, "interval");
+    BYTES_ALLOCA(_interval_description, "Sample interval, default 2 seconds.");
 
     if (mncommand_ctx_init(&cmdctx) != 0) {
         FAIL("mncommand_ctx_init");
@@ -383,8 +403,10 @@ main(int argc, char *argv[static argc])
                                 _help_description, cmd_help);
     (void)mncommand_ctx_add_cmd(&cmdctx, _version, 'V', 0,
                                 _version_description, cmd_version);
+    (void)mncommand_ctx_add_cmd(&cmdctx, _interval, 't', 1,
+                                _interval_description, cmd_interval);
 
-    if ((optind = mncommand_ctx_getopt(&cmdctx, argc, argv, NULL)) < 0) {
+    if ((optind = mncommand_ctx_getopt(&cmdctx, argc, argv, &params)) < 0) {
         errx(optind, "error see ^^^");
     }
 
@@ -445,7 +467,7 @@ main(int argc, char *argv[static argc])
             sleep(5);
             update_ctxes(&params);
         } else {
-            sleep(2);
+            sleep(params.interval);
             run_ctxes(&params);
         }
     }

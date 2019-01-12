@@ -27,6 +27,8 @@ typedef struct _resolve_names_params {
     mnarray_t names;
     /* mnprocgauges_ctx_t *, NULL */
     mnhash_t ctxes;
+#define PROCGAUGES_DEFAULT_INTERVAL (2)
+    int interval;
     bool error;
 } resolve_names_params_t;
 
