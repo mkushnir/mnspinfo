@@ -191,8 +191,9 @@ resolve_name(mnbytes_t *cmdline, pid_t pid, resolve_names_params_t *params)
                 if ((ctx = mnprocgauges_ctx_new(probe.pid, match.hit)) == NULL) {
                     TRACE("mnprocgauges_ctx_new failed for pid %d, ignoring",
                             pid);
+                } else {
+                    hash_set_add(&params->ctxes, ctx);
                 }
-                hash_set_add(&params->ctxes, ctx);
 
             } else {
                 TRACE("duplicate pid %d for %s", pid, BDATA(cmdline));
@@ -276,10 +277,10 @@ resolve_names(resolve_names_params_t *params)
 static int
 update_ctxes_cb(UNUSED mnhash_t *hash, mnhash_item_t *hit, void *udata)
 {
-    mnprocgauges_ctx_t *ctx = hit->key;
+    UNUSED mnprocgauges_ctx_t *ctx = hit->key;
     UNUSED resolve_names_params_t *params = udata;
 
-    TRACE("pid=%d", ctx->spi->proc.pid);
+    //TRACE("pid=%d", ctx->spi->proc.pid);
     return 0;
 }
 
@@ -290,7 +291,7 @@ update_ctxes(resolve_names_params_t *params)
     int res;
 
     res = resolve_names(params);
-    TRACE("res=%d", res);
+    //TRACE("res=%d", res);
     (void)hash_traverse_item(
             &params->ctxes, (hash_traverser_item_t)update_ctxes_cb, params);
     params->error = false;
@@ -298,23 +299,46 @@ update_ctxes(resolve_names_params_t *params)
 
 
 static int
-run_ctxes_cb(UNUSED mnhash_t *hash, mnhash_item_t *hit, void *udata)
+run_ctxes_cb(mnhash_t *hash, mnhash_item_t *hit, UNUSED void *udata)
 {
-    UNUSED mnprocgauges_ctx_t *ctx = hit->key;
-    UNUSED resolve_names_params_t *params = udata;
+    mnprocgauges_ctx_t *ctx = hit->key;
 
     assert(ctx->pid > 0);
     assert(ctx->fd >= 0);
 
-    if (mnspinfo_update(ctx->spi, MNSPINFO_U3) != 0) {
+    //if (mnspinfo_update(ctx->spi, 0) != 0) {
+    if (mnspinfo_update(ctx->spi, MNSPINFO_U2|MNSPINFO_U3) != 0) {
         TRACE("mnspinfo_update failed");
+        hash_delete_pair(hash, hit);
+
     } else {
-        TRACE("%jd %lf %"PRIu64" %"PRIu64" %"PRIu64,
+        char buf[1024];
+        int nwritten;
+
+        if ((nwritten = snprintf(
+                buf,
+                sizeof(buf),
+                "%jd %lf %"PRIu64" %"PRIu64" %"PRIu64"\n",
+                (intmax_t)ctx->spi->ts1.tv_sec,
+                ctx->spi->proc.cpupct,
+                ctx->spi->proc.rss,
+                ctx->spi->proc.nfiles,
+                ctx->spi->proc.nsockets)) > 0) {
+            ssize_t n;
+
+            if ((n = write(ctx->fd, buf, nwritten)) <= 0) {
+                TRACE("failed to write to %d", ctx->fd);
+            }
+        }
+
+        TRACE("%d %jd %lf %"PRIu64" %"PRIu64" %"PRIu64,
+              ctx->pid,
               (intmax_t)ctx->spi->ts1.tv_sec,
               ctx->spi->proc.cpupct,
               ctx->spi->proc.rss,
               ctx->spi->proc.nfiles,
               ctx->spi->proc.nsockets);
+
     }
     return 0;
 }

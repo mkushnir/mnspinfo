@@ -59,7 +59,6 @@ typedef struct _mnspinfo_ctx {
     } sys;
 
     struct {
-        struct rusage ru;
         uint64_t vsz;
         uint64_t rss;
         double cpupct;
@@ -86,6 +85,7 @@ typedef struct _mnspinfo_ctx {
     int v_page_count;
     int v_page_size;
 
+    struct rusage ru0, ru1;
     struct procstat *ps;
     struct kinfo_proc *procs;
 

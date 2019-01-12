@@ -264,7 +264,8 @@ typedef struct _proc_stat_cpu {
 } proc_stat_cpu_t;
 
 
-typedef struct _proc_pid_stat {
+typedef struct _proc_pid_statp {
+    proc_base_t base;
     int pid;
     char *comm;
     char *state;
@@ -309,9 +310,10 @@ typedef struct _proc_pid_stat {
     unsigned long long delayacct_blkio_ticks;
     unsigned long guest_time;
     long cguest_time;
-} proc_pid_stat_t;
+} proc_pid_statp_t;
 
 typedef struct _proc_pid_statm {
+    proc_base_t base;
     long vsize;
     long rss;
     long shared;
@@ -356,7 +358,6 @@ typedef struct _mnspinfo_ctx {
     } sys;
 
     struct {
-        struct rusage ru;
         uint64_t vsz;
         uint64_t rss;
         double cpupct;
@@ -372,7 +373,10 @@ typedef struct _mnspinfo_ctx {
      * private interface ...
      */
     proc_stat_cpu_t pscpu;
+    proc_pid_statp_t statp;
     proc_pid_statm_t statm;
+    struct rusage ru0;
+    struct rusage ru1;
 } mnspinfo_ctx_t;
 #define MNSPINFO_CTX_T_DEFINED
 

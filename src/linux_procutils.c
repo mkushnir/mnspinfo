@@ -218,7 +218,7 @@ parse_cpuinfo(mnspinfo_ctx_t *ctx)
 
     ctx->sys.ncpu = 0;
     return parse_kvp("/proc/cpuinfo",
-                     (proc_base_t *)&proc,
+                     &proc.base,
                      cpuinfo_fdesc,
                      countof(cpuinfo_fdesc),
                      &cpuinfo_fdesc[countof(cpuinfo_fdesc) - 1],
@@ -273,7 +273,7 @@ parse_meminfo(mnspinfo_ctx_t *ctx)
     meminfo_t proc;
 
     return parse_kvp("/proc/meminfo",
-                     (proc_base_t *)&proc,
+                     &proc.base,
                      meminfo_fdesc,
                      countof(meminfo_fdesc),
                      &meminfo_fdesc[countof(meminfo_fdesc) - 1],
@@ -327,7 +327,7 @@ parse_proc_stat_init(mnspinfo_ctx_t *ctx)
     proc_stat_t proc;
 
     return parse_kvp("/proc/stat",
-                     (proc_base_t *)&proc,
+                     &proc.base,
                      proc_stat_fdesc_init,
                      countof(proc_stat_fdesc_init),
                      &proc_stat_fdesc_init[countof(proc_stat_fdesc_init) - 1],
@@ -389,7 +389,7 @@ parse_proc_stat_update(mnspinfo_ctx_t *ctx)
     proc_stat_t proc;
 
     return parse_kvp("/proc/stat",
-                     (proc_base_t *)&proc,
+                     &proc.base,
                      proc_stat_fdesc_update,
                      countof(proc_stat_fdesc_update),
                      &proc_stat_fdesc_update[countof(proc_stat_fdesc_update) - 1],
@@ -400,6 +400,95 @@ parse_proc_stat_update(mnspinfo_ctx_t *ctx)
 }
 
 
+/*
+ * /proc/PID/statp -> proc_pid_statp_t
+ */
+static int
+set_proc_pid_statp(UNUSED proc_base_t *proc,
+                   UNUSED proc_fieldesc_t *fdesc,
+                   char *key,
+                   char *val,
+                   void *udata)
+{
+    mnspinfo_ctx_t *ctx = udata;
+
+    if (sscanf(key, "%d", &ctx->statp.pid) < 1) {
+        perror("sscanf");
+        return 1;
+    }
+    if (sscanf(val, "%s %c %d %d %d %d %d %u %lu %lu %lu %lu %lu %lu %ld %ld",
+               &ctx->statp.comm,
+               &ctx->statp.state,
+               &ctx->statp.ppid,
+               &ctx->statp.pgrp,
+               &ctx->statp.session,
+               &ctx->statp.tty_nr,
+               &ctx->statp.tpgid,
+               &ctx->statp.flags,
+               &ctx->statp.minflt,
+               &ctx->statp.cminflt,
+               &ctx->statp.majflt,
+               &ctx->statp.cmajflt,
+               &ctx->statp.utime,
+               &ctx->statp.stime,
+               &ctx->statp.cutime,
+               &ctx->statp.cstime) < 16) {
+        perror("sscanf");
+        return 1;
+    }
+}
+
+
+static proc_fieldesc_t proc_pid_statp_fdesc[] = {
+    {"", set_proc_pid_statp},
+};
+
+
+int
+parse_proc_pid_statp(mnspinfo_ctx_t *ctx)
+{
+    int res;
+    char buf[64];
+    proc_pid_statp_t proc;
+
+    (void)snprintf(buf, sizeof(buf), "/proc/%d/stat", ctx->proc.pid);
+    if ((res = parse_kvp(
+            buf,
+            &proc.base,
+            proc_pid_statm_fdesc,
+            countof(proc_pid_statm_fdesc),
+            &proc_pid_statm_fdesc[countof(proc_pid_statm_fdesc) - 1],
+            ' ',
+            '\n',
+            NULL,
+            ctx)) == 0) {
+        ctx->ru1.ru_utime = proc.utime;
+        ctx->ru1.ru_stime = proc.stime;
+
+        udiff = (double)(TIMEVAL_TO_USEC(ctx->ru1.ru_utime) -
+                         TIMEVAL_TO_USEC(ctx->ru0.ru_utime)) / 1000.0;
+        sdiff = (double)(TIMEVAL_TO_USEC(ctx->ru1.ru_stime) -
+                         TIMEVAL_TO_USEC(ctx->ru0.ru_stime)) / 1000.0;
+
+        if (ctx->elapsed) {
+            ctx->proc.cpupct = (udiff + sdiff) / (double)ctx->elapsed * 100.0;
+        } else {
+            ctx->proc.cpupct = 0.0;
+        }
+
+        ctx->ru0 = ctx->ru1;
+    }
+
+    return res;
+}
+
+
+
+
+
+/*
+ * /proc/PID/statm -> proc_pid_statm_t
+ */
 static int
 set_proc_pid_statm(UNUSED proc_base_t *proc,
                    UNUSED proc_fieldesc_t *fdesc,
@@ -437,11 +526,12 @@ static proc_fieldesc_t proc_pid_statm_fdesc[] = {
 int
 parse_proc_pid_statm(mnspinfo_ctx_t *ctx)
 {
+    char buf[64];
     proc_pid_statm_t proc;
-    proc_pid_statm_t *p = &proc;
 
-    return parse_kvp("/proc/self/statm",
-                     (proc_base_t *)p,
+    (void)snprintf(buf, sizeof(buf), "/proc/%d/statm", ctx->proc.pid);
+    return parse_kvp(buf,
+                     &pproc.base,
                      proc_pid_statm_fdesc,
                      countof(proc_pid_statm_fdesc),
                      &proc_pid_statm_fdesc[countof(proc_pid_statm_fdesc) - 1],
@@ -452,6 +542,9 @@ parse_proc_pid_statm(mnspinfo_ctx_t *ctx)
 }
 
 
+/*
+ * /proc/PID/fdinfo -> proc.nvnodes, proc.nsockets
+ */
 static int
 set_proc_fdinfo_flags(UNUSED proc_base_t *proc,
                       UNUSED proc_fieldesc_t *fdesc,
@@ -499,15 +592,15 @@ fdinfo_cb(const char *path, struct dirent *de, void *udata)
 
         //TRACE("fpath=%s", fpath);
         res = parse_kvp(fpath,
-                         &proc,
-                         proc_pid_fdinfo_fdesc,
-                         countof(proc_pid_fdinfo_fdesc),
-                         &proc_pid_fdinfo_fdesc[
-                            countof(proc_pid_fdinfo_fdesc) - 1],
-                         ':',
-                         '\n',
-                         NULL,
-                         ctx);
+                        &proc,
+                        proc_pid_fdinfo_fdesc,
+                        countof(proc_pid_fdinfo_fdesc),
+                        &proc_pid_fdinfo_fdesc[
+                           countof(proc_pid_fdinfo_fdesc) - 1],
+                        ':',
+                        '\n',
+                        NULL,
+                        ctx);
         free(fpath);
     }
     return res;
@@ -517,13 +610,19 @@ fdinfo_cb(const char *path, struct dirent *de, void *udata)
 int
 parse_proc_pid_fdinfo(mnspinfo_ctx_t *ctx)
 {
+    char buf[64];
+
     ctx->proc.nfiles = 0;
     ctx->proc.nvnodes = 0;
     ctx->proc.nsockets = 0;
-    return traverse_dir("/proc/self/fdinfo", fdinfo_cb, ctx);
+    (void)snprintf(buf, sizeof(buf), "/proc/%d/fdinfo", ctx->proc.pid);
+    return traverse_dir(buf, fdinfo_cb, ctx);
 }
 
 
+/*
+ * /proc/PID/fd -> proc.nsockets
+ */
 static int
 fd_cb(const char *path, struct dirent *de, void *udata)
 {
@@ -554,10 +653,11 @@ fd_cb(const char *path, struct dirent *de, void *udata)
 int
 parse_proc_pid_fd(mnspinfo_ctx_t *ctx)
 {
+    char buf[64];
+
     //ctx->proc.nfiles = 0;
     //ctx->proc.nvnodes = 0;
     ctx->proc.nsockets = 0;
-    return traverse_dir("/proc/self/fd", fd_cb, ctx);
+    (void)snprintf(buf, sizeof(buf), "/proc/%d/fd", ctx->proc.pid);
+    return traverse_dir(buf, fd_cb, ctx);
 }
-
-

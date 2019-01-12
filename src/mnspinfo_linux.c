@@ -75,6 +75,10 @@ mnspinfo_update3(mnspinfo_ctx_t *ctx)
      * /proc/PID/fdinfo/
      * /proc/PID/fd/
      */
+    if ((res = parse_proc_pid_statp(ctx)) != 0) {
+        goto end;
+        //FAIL("parse_proc_pid_statp");
+    }
     if ((res = parse_proc_pid_statm(ctx)) != 0) {
         goto end;
         //FAIL("parse_proc_pid_statm");
@@ -107,8 +111,17 @@ mnspinfo_init(mnspinfo_ctx_t *ctx, pid_t pid, unsigned flags)
 
     //memset(ctx, 0, sizeof(mnspinfo_ctx_t));
 
+    ctx->elapsed = 0;
+
+    ctx->proc.pid = pid;
+    if (ctx->proc.pid == 0) {
+        ctx->proc.pid = getpid();
+    }
+
     ctx->ts0.tv_sec = 0;
     ctx->ts0.tv_nsec = 0;
+
+    ctx->flags = flags;
 
     if (clock_gettime(CLOCK_REALTIME_FAST, &ctx->ts1) != 0) {
         FAIL("clock_gettime");
@@ -117,11 +130,9 @@ mnspinfo_init(mnspinfo_ctx_t *ctx, pid_t pid, unsigned flags)
     if ((res = mnspinfo_update0(ctx)) != 0) {
         goto end;
     }
-    _mnspinfo_update1(ctx);
-    _mnspinfo_update2(ctx);
 
-    ctx->flags = flags;
-    ctx->proc.pid = pid;
+    _mnspinfo_update1(ctx);
+
     res = mnspinfo_update3(ctx);
 
 end:

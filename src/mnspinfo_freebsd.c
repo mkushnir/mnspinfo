@@ -358,22 +358,7 @@ static int
 _mnspinfo_update3(mnspinfo_ctx_t *ctx)
 {
     int res = 0;
-    int op;
 
-    op = KERN_PROC_PID;
-    if (ctx->proc.pid == 0) {
-        ctx->proc.pid = getpid();
-    }
-    //TRACE("querying pid %d", ctx->proc.pid);
-    ctx->procsz = 0;
-    if ((ctx->procs = procstat_getprocs(ctx->ps,
-                                        op,
-                                        (int)ctx->proc.pid,
-                                        &ctx->procsz)) == NULL) {
-        res = -1;
-        goto end;
-        //FAIL("procstat_getprocs");
-    }
     ctx->proc.vsz = 0;
     ctx->proc.rss = 0;
     if ((res = traverse_procs(ctx, testvmmap, NULL)) != 0) {
@@ -397,16 +382,37 @@ int
 mnspinfo_update3(mnspinfo_ctx_t *ctx)
 {
     int res = 0;
-    mnspinfo_fini(ctx);
-    if ((ctx->ps = procstat_open_sysctl()) == NULL) {
+    double udiff, sdiff;
+
+    ctx->procsz = 0;
+    if ((ctx->procs = procstat_getprocs(ctx->ps,
+                                        KERN_PROC_PID,
+                                        (int)ctx->proc.pid,
+                                        &ctx->procsz)) == NULL) {
         res = -1;
         goto end;
-        //FAIL("procstat_open_sysctl");
     }
+
+    ctx->ru1 = ctx->procs->ki_rusage;
+
+    udiff = (double)(TIMEVAL_TO_USEC(ctx->ru1.ru_utime) -
+                     TIMEVAL_TO_USEC(ctx->ru0.ru_utime)) / 1000.0;
+    sdiff = (double)(TIMEVAL_TO_USEC(ctx->ru1.ru_stime) -
+                     TIMEVAL_TO_USEC(ctx->ru0.ru_stime)) / 1000.0;
+
+    if (ctx->elapsed) {
+        ctx->proc.cpupct = (udiff + sdiff) / (double)ctx->elapsed * 100.0;
+    } else {
+        ctx->proc.cpupct = 0.0;
+    }
+
+    ctx->ru0 = ctx->ru1;
+
     res = _mnspinfo_update3(ctx);
 
 end:
     return res;
+
 }
 
 
@@ -421,8 +427,20 @@ int
 mnspinfo_init(mnspinfo_ctx_t *ctx, pid_t pid, unsigned flags)
 {
     int res = 0;
+
+    //memset(ctx, 0, sizeof(mnspinfo_ctx_t));
+
+    ctx->elapsed = 0;
+
+    ctx->proc.pid = pid;
+    if (ctx->proc.pid == 0) {
+        ctx->proc.pid = getpid();
+    }
+
     ctx->ts0.tv_sec = 0;
     ctx->ts0.tv_nsec = 0;
+
+    ctx->flags = flags;
 
     if (clock_gettime(CLOCK_REALTIME_FAST, &ctx->ts1) != 0) {
         FAIL("clock_gettime");
@@ -431,14 +449,28 @@ mnspinfo_init(mnspinfo_ctx_t *ctx, pid_t pid, unsigned flags)
     if ((res = mnspinfo_update0(ctx)) != 0) {
         goto end;
     }
-    _mnspinfo_update1(ctx);
-    _mnspinfo_update2(ctx);
 
-    ctx->flags = flags;
-    ctx->proc.pid = pid;
+    _mnspinfo_update1(ctx);
+
     if ((ctx->ps = procstat_open_sysctl()) == NULL) {
         FAIL("procstat_open_sysctl");
     }
+
+    /*
+     *
+     */
+    ctx->procsz = 0;
+    if ((ctx->procs = procstat_getprocs(ctx->ps,
+                                        KERN_PROC_PID,
+                                        (int)ctx->proc.pid,
+                                        &ctx->procsz)) == NULL) {
+        res = -1;
+        goto end;
+    }
+    ctx->ru0 = ctx->procs->ki_rusage;
+    ctx->ru1 = ctx->procs->ki_rusage;
+    ctx->proc.cpupct = 0.0;
+
     res = _mnspinfo_update3(ctx);
 
 end:

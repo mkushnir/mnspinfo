@@ -36,7 +36,6 @@ typedef struct _mnspinfo_ctx {
     } sys;
 
     struct {
-        struct rusage ru;
         uint64_t vsz;
         uint64_t rss;
         double cpupct;

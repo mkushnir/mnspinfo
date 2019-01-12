@@ -25,7 +25,6 @@ extern "C" {
 int mnspinfo_init(mnspinfo_ctx_t *, pid_t, unsigned);
 int mnspinfo_update0(mnspinfo_ctx_t *);
 int mnspinfo_update1(mnspinfo_ctx_t *);
-void _mnspinfo_update2(mnspinfo_ctx_t *);
 int mnspinfo_update2(mnspinfo_ctx_t *);
 int mnspinfo_update3(mnspinfo_ctx_t *);
 int mnspinfo_update4(mnspinfo_ctx_t *);
