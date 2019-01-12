@@ -87,9 +87,6 @@ typedef struct _mnspinfo_ctx {
 
     struct rusage ru0, ru1;
     struct procstat *ps;
-    struct kinfo_proc *procs;
-
-    unsigned int procsz;
 } mnspinfo_ctx_t;
 #define MNSPINFO_CTX_T_DEFINED
 

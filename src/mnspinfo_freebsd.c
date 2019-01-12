@@ -170,12 +170,16 @@ end:
 
 
 static int
-traverse_procs(mnspinfo_ctx_t *ctx, mnspinfo_proc_cb_t cb, void *udata)
+traverse_procs(mnspinfo_ctx_t *ctx,
+               struct kinfo_proc *procs,
+               unsigned procsz,
+               mnspinfo_proc_cb_t cb,
+               void *udata)
 {
     unsigned int i;
 
-    for (i = 0; i < ctx->procsz; ++i) {
-        if (cb(ctx, &ctx->procs[i], udata) != 0) {
+    for (i = 0; i < procsz; ++i) {
+        if (cb(ctx, &procs[i], udata) != 0) {
             TRRET(TRAVERSE_PROCS + 1);
         }
     }
@@ -358,12 +362,23 @@ mnspinfo_update1(mnspinfo_ctx_t *ctx)
 }
 
 
-static int
-_mnspinfo_update3(mnspinfo_ctx_t *ctx)
+int
+mnspinfo_update3(mnspinfo_ctx_t *ctx)
 {
     int res = 0;
+    struct kinfo_proc *procs;
+    unsigned procsz;
 
-    ctx->ru1 = ctx->procs->ki_rusage;
+    procsz = 0;
+    if ((procs = procstat_getprocs(ctx->ps,
+                                   KERN_PROC_PID,
+                                   (int)ctx->proc.pid,
+                                   &procsz)) == NULL) {
+        res = -1;
+        goto end;
+    }
+
+    ctx->ru1 = procs->ki_rusage;
 
     if (ctx->elapsed) {
         double udiff, sdiff;
@@ -379,47 +394,16 @@ _mnspinfo_update3(mnspinfo_ctx_t *ctx)
 
     ctx->ru0 = ctx->ru1;
 
-    //ctx->proc.vsz = 0;
-    //ctx->proc.rss = 0;
-    //if ((res = traverse_procs(ctx, testvmmap, NULL)) != 0) {
-    //    goto end;
-    //    //FAIL("traverse_procs");
-    //}
-
-    ctx->proc.vsz = ctx->procs->ki_size;
-    ctx->proc.rss = ctx->procs->ki_rssize * ctx->v_page_size;
+    ctx->proc.vsz = procs->ki_size;
+    ctx->proc.rss = procs->ki_rssize * ctx->v_page_size;
 
     ctx->proc.nfiles = 0;
     ctx->proc.nvnodes = 0;
     ctx->proc.nsockets = 0;
-    if ((res = traverse_procs(ctx, testfiles, NULL)) != 0) {
-        goto end;
-        //FAIL("traverse_procs");
-    }
 
-end:
-    return res;
-}
+    res = traverse_procs(ctx, procs, procsz, testfiles, NULL);
 
-
-int
-mnspinfo_update3(mnspinfo_ctx_t *ctx)
-{
-    int res = 0;
-
-    ctx->procsz = 0;
-    if ((ctx->procs = procstat_getprocs(ctx->ps,
-                                        KERN_PROC_PID,
-                                        (int)ctx->proc.pid,
-                                        &ctx->procsz)) == NULL) {
-        res = -1;
-        goto end;
-    }
-
-    res = _mnspinfo_update3(ctx);
-
-    procstat_freeprocs(ctx->ps, ctx->procs);
-    ctx->procs = NULL;
+    procstat_freeprocs(ctx->ps, procs);
 
 end:
     return res;
@@ -477,10 +461,6 @@ void
 mnspinfo_fini(mnspinfo_ctx_t *ctx)
 {
     if (ctx->ps != NULL) {
-        if (ctx->procs != NULL) {
-            procstat_freeprocs(ctx->ps, ctx->procs);
-            ctx->procs = NULL;
-        }
         procstat_close(ctx->ps);
         ctx->ps = NULL;
     }
