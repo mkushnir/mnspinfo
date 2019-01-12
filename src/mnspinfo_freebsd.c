@@ -25,7 +25,7 @@ testfiles(mnspinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
     struct filestat_list *files;
     struct filestat *fs;
 
-    if ((files = procstat_getfiles(ctx->ps, proc, 1)) == NULL) {
+    if ((files = procstat_getfiles(ctx->ps, proc, 0)) == NULL) {
         res = -1;
         goto end;
         //FAIL("procstat_getfiles");
@@ -35,17 +35,22 @@ testfiles(mnspinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
         if (fs->fs_fd == -1) {
             continue;
         }
+
         ++ctx->proc.nfiles;
+
         switch (fs->fs_type) {
         case PS_FST_TYPE_VNODE:
             ++ctx->proc.nvnodes;
             break;
+
         case PS_FST_TYPE_SOCKET:
             ++ctx->proc.nsockets;
             break;
+
         default:
             break;
         }
+
         //TRACE("type=%08x "
         //      "flags=%08x "
         //      "fflags=%08x "
@@ -63,7 +68,9 @@ testfiles(mnspinfo_ctx_t *ctx, struct kinfo_proc *proc, UNUSED void *udata)
         //      fs->fs_offset,
         //      fs->fs_path);
     }
+
     procstat_freefiles(ctx->ps, files);
+
     //TRACE("KI vsz=%ld rss=%ld-%ld=%ld %%cpu=%u",
     //      proc->ki_size,
     //      proc->ki_rssize * 4096,
@@ -169,7 +176,7 @@ end:
 }
 
 
-static int
+UNUSED static int
 traverse_procs(mnspinfo_ctx_t *ctx,
                struct kinfo_proc *procs,
                unsigned procsz,
@@ -379,7 +386,6 @@ mnspinfo_update3(mnspinfo_ctx_t *ctx)
     }
 
     ctx->ru1 = procs->ki_rusage;
-
     if (ctx->elapsed) {
         double udiff, sdiff;
         udiff = (double)(TIMEVAL_TO_USEC(ctx->ru1.ru_utime) -
@@ -391,7 +397,6 @@ mnspinfo_update3(mnspinfo_ctx_t *ctx)
     } else {
         ctx->proc.cpupct = 0.0;
     }
-
     ctx->ru0 = ctx->ru1;
 
     ctx->proc.vsz = procs->ki_size;
@@ -400,7 +405,6 @@ mnspinfo_update3(mnspinfo_ctx_t *ctx)
     ctx->proc.nfiles = 0;
     ctx->proc.nvnodes = 0;
     ctx->proc.nsockets = 0;
-
     res = traverse_procs(ctx, procs, procsz, testfiles, NULL);
 
     procstat_freeprocs(ctx->ps, procs);
