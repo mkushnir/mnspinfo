@@ -382,7 +382,6 @@ int
 mnspinfo_update3(mnspinfo_ctx_t *ctx)
 {
     int res = 0;
-    double udiff, sdiff;
 
     ctx->procsz = 0;
     if ((ctx->procs = procstat_getprocs(ctx->ps,
@@ -395,13 +394,14 @@ mnspinfo_update3(mnspinfo_ctx_t *ctx)
 
     ctx->ru1 = ctx->procs->ki_rusage;
 
-    udiff = (double)(TIMEVAL_TO_USEC(ctx->ru1.ru_utime) -
-                     TIMEVAL_TO_USEC(ctx->ru0.ru_utime)) / 1000.0;
-    sdiff = (double)(TIMEVAL_TO_USEC(ctx->ru1.ru_stime) -
-                     TIMEVAL_TO_USEC(ctx->ru0.ru_stime)) / 1000.0;
-
     if (ctx->elapsed) {
+        double udiff, sdiff;
+        udiff = (double)(TIMEVAL_TO_USEC(ctx->ru1.ru_utime) -
+                         TIMEVAL_TO_USEC(ctx->ru0.ru_utime)) / 1000.0;
+        sdiff = (double)(TIMEVAL_TO_USEC(ctx->ru1.ru_stime) -
+                         TIMEVAL_TO_USEC(ctx->ru0.ru_stime)) / 1000.0;
         ctx->proc.cpupct = (udiff + sdiff) / (double)ctx->elapsed * 100.0;
+
     } else {
         ctx->proc.cpupct = 0.0;
     }

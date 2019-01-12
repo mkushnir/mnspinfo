@@ -170,6 +170,7 @@ resolve_name(mnbytes_t *cmdline, pid_t pid, resolve_names_params_t *params)
     } match;
     mnprocgauges_ctx_t probe;
 
+    //TRACE("cmdline=%s", BDATA(cmdline));
     probe.pid = pid;
     match.hit = NULL;
     for (match.p0 = BDATA(cmdline),
@@ -178,7 +179,7 @@ resolve_name(mnbytes_t *cmdline, pid_t pid, resolve_names_params_t *params)
         if (match.p0 == match.p1) {
             break;
         }
-        //TRACE("a=%s", (char *)p0);
+
         if (array_traverse(&params->names,
                            (array_traverser_t)resolve_name_cb,
                            &match) != 0) {
@@ -192,6 +193,7 @@ resolve_name(mnbytes_t *cmdline, pid_t pid, resolve_names_params_t *params)
                     TRACE("mnprocgauges_ctx_new failed for pid %d, ignoring",
                             pid);
                 } else {
+                    //TRACE("added %d", probe.pid);
                     hash_set_add(&params->ctxes, ctx);
                 }
 
@@ -201,8 +203,13 @@ resolve_name(mnbytes_t *cmdline, pid_t pid, resolve_names_params_t *params)
             /*
              * matched, done
              */
+            //TRACE("matched: %s", (char *)match.p0);
             break;
+
+        } else {
+            //TRACE("didn't match: %s", (char *)match.p0);
         }
+
         match.sz -= match.p1 - match.p0 + 1;
         match.p0 = match.p1 + 1;
         match.p1 = memchr(match.p0, 0, match.sz);
@@ -288,7 +295,7 @@ update_ctxes_cb(UNUSED mnhash_t *hash, mnhash_item_t *hit, void *udata)
 static void
 update_ctxes(resolve_names_params_t *params)
 {
-    int res;
+    UNUSED int res;
 
     res = resolve_names(params);
     //TRACE("res=%d", res);

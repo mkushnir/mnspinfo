@@ -408,34 +408,35 @@ set_proc_pid_statp(UNUSED proc_base_t *proc,
                    UNUSED proc_fieldesc_t *fdesc,
                    char *key,
                    char *val,
-                   void *udata)
+                   UNUSED void *udata)
 {
-    mnspinfo_ctx_t *ctx = udata;
+    proc_pid_statp_t *statp = (proc_pid_statp_t *)proc;
 
-    if (sscanf(key, "%d", &ctx->statp.pid) < 1) {
+    if (sscanf(key, "%d", &statp->pid) < 1) {
         perror("sscanf");
         return 1;
     }
-    if (sscanf(val, "%s %c %d %d %d %d %d %u %lu %lu %lu %lu %lu %lu %ld %ld",
-               &ctx->statp.comm,
-               &ctx->statp.state,
-               &ctx->statp.ppid,
-               &ctx->statp.pgrp,
-               &ctx->statp.session,
-               &ctx->statp.tty_nr,
-               &ctx->statp.tpgid,
-               &ctx->statp.flags,
-               &ctx->statp.minflt,
-               &ctx->statp.cminflt,
-               &ctx->statp.majflt,
-               &ctx->statp.cmajflt,
-               &ctx->statp.utime,
-               &ctx->statp.stime,
-               &ctx->statp.cutime,
-               &ctx->statp.cstime) < 16) {
+    if (sscanf(val, "%128s %1c %d %d %d %d %d %u %lu %lu %lu %lu %lu %lu %ld %ld",
+               statp->comm,
+               &statp->state,
+               &statp->ppid,
+               &statp->pgrp,
+               &statp->session,
+               &statp->tty_nr,
+               &statp->tpgid,
+               &statp->flags,
+               &statp->minflt,
+               &statp->cminflt,
+               &statp->majflt,
+               &statp->cmajflt,
+               &statp->utime,
+               &statp->stime,
+               &statp->cutime,
+               &statp->cstime) < 16) {
         perror("sscanf");
         return 1;
     }
+    return 0;
 }
 
 
@@ -455,23 +456,25 @@ parse_proc_pid_statp(mnspinfo_ctx_t *ctx)
     if ((res = parse_kvp(
             buf,
             &proc.base,
-            proc_pid_statm_fdesc,
-            countof(proc_pid_statm_fdesc),
-            &proc_pid_statm_fdesc[countof(proc_pid_statm_fdesc) - 1],
+            proc_pid_statp_fdesc,
+            countof(proc_pid_statp_fdesc),
+            &proc_pid_statp_fdesc[countof(proc_pid_statp_fdesc) - 1],
             ' ',
             '\n',
             NULL,
             ctx)) == 0) {
-        ctx->ru1.ru_utime = proc.utime;
-        ctx->ru1.ru_stime = proc.stime;
-
-        udiff = (double)(TIMEVAL_TO_USEC(ctx->ru1.ru_utime) -
-                         TIMEVAL_TO_USEC(ctx->ru0.ru_utime)) / 1000.0;
-        sdiff = (double)(TIMEVAL_TO_USEC(ctx->ru1.ru_stime) -
-                         TIMEVAL_TO_USEC(ctx->ru0.ru_stime)) / 1000.0;
+         TICKS_TO_TIMEVAL(ctx->ru1.ru_utime, ctx->sys.statclock, proc.utime);
+         TICKS_TO_TIMEVAL(ctx->ru1.ru_stime, ctx->sys.statclock, proc.stime);
 
         if (ctx->elapsed) {
+            double udiff, sdiff;
+            udiff = (double)(TIMEVAL_TO_USEC(ctx->ru1.ru_utime) -
+                             TIMEVAL_TO_USEC(ctx->ru0.ru_utime)) / 1000.0;
+            sdiff = (double)(TIMEVAL_TO_USEC(ctx->ru1.ru_stime) -
+                             TIMEVAL_TO_USEC(ctx->ru0.ru_stime)) / 1000.0;
+
             ctx->proc.cpupct = (udiff + sdiff) / (double)ctx->elapsed * 100.0;
+
         } else {
             ctx->proc.cpupct = 0.0;
         }
@@ -490,30 +493,31 @@ parse_proc_pid_statp(mnspinfo_ctx_t *ctx)
  * /proc/PID/statm -> proc_pid_statm_t
  */
 static int
-set_proc_pid_statm(UNUSED proc_base_t *proc,
+set_proc_pid_statm(proc_base_t *proc,
                    UNUSED proc_fieldesc_t *fdesc,
                    char *key,
                    char *val,
                    void *udata)
 {
     mnspinfo_ctx_t *ctx = udata;
+    proc_pid_statm_t *statm = (proc_pid_statm_t *)proc;
 
-    if (sscanf(key, "%ld", &ctx->statm.vsize) < 1) {
+    if (sscanf(key, "%ld", &statm->vsize) < 1) {
         perror("sscanf");
         return 1;
     }
     if (sscanf(val, "%ld %ld %ld %ld %ld %ld",
-               &ctx->statm.rss,
-               &ctx->statm.shared,
-               &ctx->statm.text,
-               &ctx->statm.lib,
-               &ctx->statm.data,
-               &ctx->statm.dirty) < 6) {
+               &statm->rss,
+               &statm->shared,
+               &statm->text,
+               &statm->lib,
+               &statm->data,
+               &statm->dirty) < 6) {
         perror("sscanf");
         return 1;
     }
-    ctx->proc.vsz = ctx->statm.vsize * ctx->sys.pagesize;
-    ctx->proc.rss = ctx->statm.rss * ctx->sys.pagesize;
+    ctx->proc.vsz = statm->vsize * ctx->sys.pagesize;
+    ctx->proc.rss = statm->rss * ctx->sys.pagesize;
     return 0;
 }
 
@@ -531,7 +535,7 @@ parse_proc_pid_statm(mnspinfo_ctx_t *ctx)
 
     (void)snprintf(buf, sizeof(buf), "/proc/%d/statm", ctx->proc.pid);
     return parse_kvp(buf,
-                     &pproc.base,
+                     &proc.base,
                      proc_pid_statm_fdesc,
                      countof(proc_pid_statm_fdesc),
                      &proc_pid_statm_fdesc[countof(proc_pid_statm_fdesc) - 1],

@@ -14,6 +14,13 @@
 #define TIMESPEC_TO_NSEC(ts) ((ts).tv_sec * 1000000000 + (ts).tv_nsec)
 #define TIMEVAL_TO_USEC(ts) ((ts).tv_sec * 1000000 + (ts).tv_usec)
 
+#define TICKS_TO_TIMEVAL(tv, mod, ticks)               \
+do {                                                   \
+    (tv).tv_sec = (ticks) / mod;                       \
+    (tv).tv_usec = ((ticks) % mod) * 1000000 / mod;    \
+} while (0)                                            \
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

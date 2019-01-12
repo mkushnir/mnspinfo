@@ -267,8 +267,8 @@ typedef struct _proc_stat_cpu {
 typedef struct _proc_pid_statp {
     proc_base_t base;
     int pid;
-    char *comm;
-    char *state;
+    char comm[128];
+    char state;
     int ppid;
     int pgrp;
     int session;
@@ -373,8 +373,8 @@ typedef struct _mnspinfo_ctx {
      * private interface ...
      */
     proc_stat_cpu_t pscpu;
-    proc_pid_statp_t statp;
-    proc_pid_statm_t statm;
+    //proc_pid_statp_t statp;
+    //proc_pid_statm_t statm;
     struct rusage ru0;
     struct rusage ru1;
 } mnspinfo_ctx_t;
@@ -396,6 +396,7 @@ int parse_cpuinfo(mnspinfo_ctx_t *);
 int parse_meminfo(mnspinfo_ctx_t *);
 int parse_proc_stat_init(mnspinfo_ctx_t *);
 int parse_proc_stat_update(mnspinfo_ctx_t *);
+int parse_proc_pid_statp(mnspinfo_ctx_t *);
 int parse_proc_pid_statm(mnspinfo_ctx_t *);
 int parse_proc_pid_fdinfo(mnspinfo_ctx_t *);
 int parse_proc_pid_fd(mnspinfo_ctx_t *);
