@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS = foreign subdir-objects
 CLEANFILES = *.core core
 #CLEANFILES += *.in
 AM_MAKEFLAGS = -s

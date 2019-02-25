@@ -50,7 +50,7 @@ cmd_version(UNUSED mncommand_ctx_t *ctx,
             UNUSED const char *optarg,
             UNUSED void *udata)
 {
-    printf("%s\n", VERSION);
+    printf("%s\n", PACKAGE_STRING);
     exit(0);
 }
 
