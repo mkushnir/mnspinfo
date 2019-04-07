@@ -188,6 +188,7 @@ resolve_name(mnbytes_t *cmdline, pid_t pid, resolve_names_params_t *params)
     //TRACE("cmdline=%s", BDATA(cmdline));
     probe.pid = pid;
     match.hit = NULL;
+    match.sz = BSZ(cmdline);
     for (match.p0 = BDATA(cmdline),
             match.p1 = memchr(match.p0, 0, match.sz);
          match.sz > 0 && match.p1 != NULL;) {
