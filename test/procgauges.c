@@ -166,7 +166,7 @@ resolve_name_cb(mnbytes_t **s, void *udata)
         ssize_t sz;
         mnbytes_t *hit;
     } *match = udata;
-    int res = strstr(match->p0, (char *)BDATA(*s)) != NULL;
+    int res = strstr(match->p0, BCDATA(*s)) != NULL;
     if (res) {
         match->hit = *s;
     }
