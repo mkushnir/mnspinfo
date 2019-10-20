@@ -401,11 +401,11 @@ main(int argc, char *argv[static argc])
     }
 
     (void)mncommand_ctx_add_cmd(&cmdctx, _help, 'h', 0,
-                                _help_description, cmd_help);
+                                _help_description, cmd_help, NULL);
     (void)mncommand_ctx_add_cmd(&cmdctx, _version, 'V', 0,
-                                _version_description, cmd_version);
+                                _version_description, cmd_version, NULL);
     (void)mncommand_ctx_add_cmd(&cmdctx, _interval, 't', 1,
-                                _interval_description, cmd_interval);
+                                _interval_description, cmd_interval, NULL);
 
     if ((optind = mncommand_ctx_getopt(&cmdctx, argc, argv, &params)) < 0) {
         errx(optind, "error see ^^^");
