@@ -389,23 +389,19 @@ main(int argc, char *argv[static argc])
         .error = false,
     };
 
-    BYTES_ALLOCA(_help, "help");
-    BYTES_ALLOCA(_help_description, "Print this message and exit.");
-    BYTES_ALLOCA(_version, "version");
-    BYTES_ALLOCA(_version_description, "Print version and exit.");
-    BYTES_ALLOCA(_interval, "interval");
-    BYTES_ALLOCA(_interval_description, "Sample interval, default 2 seconds.");
-
     if (mncommand_ctx_init(&cmdctx) != 0) {
         FAIL("mncommand_ctx_init");
     }
 
-    (void)mncommand_ctx_add_cmd(&cmdctx, _help, 'h', 0,
-                                _help_description, cmd_help, NULL);
-    (void)mncommand_ctx_add_cmd(&cmdctx, _version, 'V', 0,
-                                _version_description, cmd_version, NULL);
-    (void)mncommand_ctx_add_cmd(&cmdctx, _interval, 't', 1,
-                                _interval_description, cmd_interval, NULL);
+    (void)mncommand_ctx_add_cmd(&cmdctx, BYTES_REF("help"), 'h', 0,
+                                BYTES_REF("Print this message and exit."),
+                                cmd_help, NULL);
+    (void)mncommand_ctx_add_cmd(&cmdctx, BYTES_REF("version"), 'V', 0,
+                                BYTES_REF("Print version and exit."),
+                                cmd_version, NULL);
+    (void)mncommand_ctx_add_cmd(&cmdctx, BYTES_REF("interval"), 't', 1,
+                                BYTES_REF("Print version and exit."),
+                                cmd_interval, NULL);
 
     if ((optind = mncommand_ctx_getopt(&cmdctx, argc, argv, &params)) < 0) {
         errx(optind, "error see ^^^");
