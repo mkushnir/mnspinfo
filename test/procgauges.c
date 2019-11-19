@@ -183,10 +183,8 @@ resolve_name(mnbytes_t *cmdline, pid_t pid, resolve_names_params_t *params)
         ssize_t sz;
         mnbytes_t *hit;
     } match;
-    mnprocgauges_ctx_t probe;
 
     //TRACE("cmdline=%s", BDATA(cmdline));
-    probe.pid = pid;
     match.hit = NULL;
     match.sz = BSZ(cmdline);
     for (match.p0 = BDATA(cmdline),
@@ -202,14 +200,15 @@ resolve_name(mnbytes_t *cmdline, pid_t pid, resolve_names_params_t *params)
             mnhash_item_t *hit;
 
             assert(match.hit != NULL);
-            if ((hit = hash_get_item(&params->ctxes, &probe)) == NULL) {
+            if ((hit = hash_get_item(&params->ctxes,
+                                     &(mnprocgauges_ctx_t){.pid = pid})) == NULL) {
                 mnprocgauges_ctx_t *ctx;
 
-                if ((ctx = mnprocgauges_ctx_new(probe.pid, match.hit)) == NULL) {
+                if ((ctx = mnprocgauges_ctx_new(pid, match.hit)) == NULL) {
                     TRACE("mnprocgauges_ctx_new failed for pid %d, ignoring",
                             pid);
                 } else {
-                    //TRACE("added %d", probe.pid);
+                    //TRACE("added %d", pid);
                     hash_set_add(&params->ctxes, ctx);
                 }
 
