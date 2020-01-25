@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <mrkcommon/dumpm.h>
+#include <mncommon/dumpm.h>
 
 #include "mnspinfo_private.h"
 

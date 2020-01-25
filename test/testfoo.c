@@ -5,9 +5,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include <mrkcommon/dumpm.h>
-#include <mrkcommon/util.h>
-#include <mrkcommon/unittest.h>
+#include <mncommon/dumpm.h>
+#include <mncommon/util.h>
+#include <mncommon/unittest.h>
 
 #include "diag.h"
 

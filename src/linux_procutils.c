@@ -6,9 +6,9 @@
 #include <fcntl.h>
 
 //#define TRRET_DEBUG
-#include <mrkcommon/dumpm.h>
-#include <mrkcommon/traversedir.h>
-#include <mrkcommon/util.h>
+#include <mncommon/dumpm.h>
+#include <mncommon/traversedir.h>
+#include <mncommon/util.h>
 
 #include "mnspinfo_private.h"
 #include "diag.h"

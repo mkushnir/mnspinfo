@@ -48,26 +48,26 @@ nodist_testfoo_SOURCES = diag.c
 testfoo_SOURCES = testfoo.c
 testfoo_CFLAGS = $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
 testfoo_LDFLAGS += $(DEBUG_LD_FLAGS) -L$(top_srcdir)/src/.libs -L$(libdir)
-testfoo_LDADD = -lmnspinfo -lmrkcommon -lmndiag $(plat_libs)
+testfoo_LDADD = -lmnspinfo -lmncommon -lmndiag $(plat_libs)
 
 nodist_testrusage_SOURCES = diag.c
 testrusage_SOURCES = testrusage.c
 testrusage_CFLAGS = $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
 testrusage_LDFLAGS += $(DEBUG_LD_FLAGS) -L$(top_srcdir)/src/.libs -L$(libdir)
-testrusage_LDADD = -lmnspinfo -lmrkcommon -lmndiag $(plat_libs)
+testrusage_LDADD = -lmnspinfo -lmncommon -lmndiag $(plat_libs)
 
 nodist_procgauges_SOURCES = diag.c
 procgauges_SOURCES = procgauges.c
 procgauges_CFLAGS = $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
 procgauges_LDFLAGS += $(DEBUG_LD_FLAGS) -L$(top_srcdir)/src/.libs -L$(libdir)
-procgauges_LDADD = -lmnspinfo -lmrkapp -lmrkcommon -lmndiag $(plat_libs)
+procgauges_LDADD = -lmnspinfo -lmnapp -lmncommon -lmndiag $(plat_libs)
 
 if LINUX
 nodist_testparse_SOURCES = diag.c
 testparse_SOURCES = testparse.c
 testparse_CFLAGS = $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
 testparse_LDFLAGS += $(DEBUG_LD_FLAGS) -L$(top_srcdir)/src/.libs -L$(libdir) $(plat_libs)
-testparse_LDADD = -lmnspinfo -lmrkcommon -lmndiag $(plat_libs)
+testparse_LDADD = -lmnspinfo -lmncommon -lmndiag $(plat_libs)
 endif
 
 diag.c diag.h: $(diags)

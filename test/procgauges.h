@@ -4,9 +4,9 @@
 #include <stdbool.h>
 #include <unistd.h> //pid_t
 
-#include <mrkcommon/array.h>
-#include <mrkcommon/bytes.h>
-#include <mrkcommon/hash.h>
+#include <mncommon/array.h>
+#include <mncommon/bytes.h>
+#include <mncommon/hash.h>
 
 #include <mnspinfo.h>
 

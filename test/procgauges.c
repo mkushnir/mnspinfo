@@ -9,13 +9,13 @@
 #include <stdint.h> //intmax_t
 #include <inttypes.h> //PRId
 
-#include <mrkcommon/array.h>
-#include <mrkcommon/hash.h>
-#include <mrkcommon/bytes.h>
-#include <mrkcommon/bytestream.h>
-#include <mrkcommon/dumpm.h>
-#include <mrkcommon/util.h>
-#include <mrkcommon/traversedir.h>
+#include <mncommon/array.h>
+#include <mncommon/hash.h>
+#include <mncommon/bytes.h>
+#include <mncommon/bytestream.h>
+#include <mncommon/dumpm.h>
+#include <mncommon/util.h>
+#include <mncommon/traversedir.h>
 
 #include <mncommand.h>
 #include "procgauges.h"
@@ -80,7 +80,7 @@ mnprocgauges_ctx_new(pid_t pid, mnbytes_t *suffix)
     mnprocgauges_ctx_t *res;
     char buf[MAXNAMLEN + 1];
 
-    if (MRKUNLIKELY((res = malloc(sizeof(mnprocgauges_ctx_t))) == NULL)) {
+    if (MNUNLIKELY((res = malloc(sizeof(mnprocgauges_ctx_t))) == NULL)) {
         FAIL("malloc");
     }
 

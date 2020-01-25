@@ -49,7 +49,7 @@ endif
 libmnspinfo_la_CFLAGS = $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
 
 libmnspinfo_la_LDFLAGS += $(DEBUG_LD_FLAGS) -version-info 0:0:0 -L$(libdir) $(plat_libs)
-libmnspinfo_la_LIBADD = -lmrkcommon -lmndiag
+libmnspinfo_la_LIBADD = -lmncommon -lmndiag
 
 SUBDIRS = .
 
