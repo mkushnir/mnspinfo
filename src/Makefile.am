@@ -1,4 +1,5 @@
 AM_MAKEFLAGS = -s
+AM_LIBTOOLFLAGS = --silent
 
 diags = diag.txt
 BUILT_SOURCES = diag.c diag.h
