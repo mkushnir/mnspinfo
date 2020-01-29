@@ -137,6 +137,6 @@ AM_CONDITIONAL([FREEBSD], [echo $build_os | grep freebsd >/dev/null])
 AM_CONDITIONAL([DARWIN], [echo $build_os | grep darwin >/dev/null])
 
 #dnl pass LDFLAGS=-L${LOCALBASE}/lib in the environment
-AC_CHECK_LIB(mncommon, _fini, [], [AC_MSG_FAILURE(libmncommon.so is required. Please find it at git@github.com:mkushnir/mncommon.git)])
+#AC_CHECK_LIB(mncommon, _fini, [], [AC_MSG_FAILURE(libmncommon.so is required. Please find it at git@github.com:mkushnir/mncommon.git)])
 
 AC_OUTPUT
